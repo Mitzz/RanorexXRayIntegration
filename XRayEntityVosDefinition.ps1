@@ -57,11 +57,11 @@
     }
 }
 
-class XrayTestPlanVo{
+class XRayTestSetEntityVo{
     [XRayTestEntityVo[]]$tests
     [string]$key
 
-    XrayTestPlanVo([XRayTestEntityVo[]]$tests){
+    XRayTestSetEntityVo([XRayTestEntityVo[]]$tests){
         $this.tests = $tests
     }
 
@@ -82,12 +82,49 @@ class XrayTestPlanVo{
                 "project" = @{
                     "key" = [Credentials]::projectKey
                 };
+                "summary" = "Created at " + $(get-date -f MM-dd-yyyy_HH_mm_ss) + " during Ranorex-XRay Integration using REST";
+                "description" = "Created at " + $(get-date -f MM-dd-yyyy_HH_mm_ss) + " during Ranorex-XRay Integration using REST";
+                "issuetype" = @{
+                    "name" = "Test Set"
+                 };
+                "customfield_10410" = $testKey
+             }
+         }
+         ConvertTo-Json $body
+        [Credentials]::setProtocols()
+        Write-Host "Creating Test Set...."
+        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
+	    $responseContent = ConvertFrom-Json ($response.Content)
+        $this.key = $responseContent.key
+        Write-Host $response
+
+    }
+}
+
+class XrayTestPlanVo{
+    [string[]]$keys
+    [string]$key
+
+    XrayTestPlanVo([string[]]$keys){
+        $this.keys = $keys
+    }
+
+    create(){
+        $url = [Constants]::url + "api/2/issue"
+        $Headers = @{
+		    Authorization = [Credentials]::getEncodedValue()
+	    }
+        $body = @{
+            fields = @{
+                "project" = @{
+                    "key" = [Credentials]::projectKey
+                };
                 "summary" = "sumamry  at " + $(get-date -f MM-dd-yyyy_HH_mm_ss);
                 "description" = "Test Plan using REST";
                 "issuetype" = @{
                     "name" = "Test Plan"
                  };
-                "customfield_10424" = $testKey
+                "customfield_10424" = $this.keys
              }
          }
          ConvertTo-Json $body
@@ -99,6 +136,7 @@ class XrayTestPlanVo{
         Write-Host $response
 
     }
+
 }
 
 class XRayTestEntityVo
