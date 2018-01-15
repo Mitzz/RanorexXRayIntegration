@@ -3,24 +3,31 @@
 class RanorexXmlProcessor{
     [System.Xml.XmlDocument]$file
     [XRayTestEntityVo[]]$tests = @()
+    [datetime]$startDate;
+    [datetime]$endDate;
+
     RanorexXmlProcessor($filePath){
         [System.Xml.XmlDocument]$this.file = new-object System.Xml.XmlDocument
         $this.file.load("C:\Users\bhansm\Downloads\RanorexToXrayIntegration\Harald_SampleReports\testReport_HTML_junit\testReport\WebConsole_20171109_134715.html.data.xml")
     }
 
-    CreateTestVos(){
-        Write-Host $this.tests.Count
+    StartDateEndDate(){
         $root_node = $this.file.SelectNodes("//activity[@type='root']")
     
         $dataStr = $root_node.timestamp
         $dateFormat = "M/d/yyyy h:m:ss tt"
-        $startDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+        $this.startDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
 
         $dataStr = $root_node.endtime
-        $endDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+        $this.endDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
 
-        $startTime = $startDate.ToString('s') + "+00:00"
-        $endTime = $endDate.ToString('s') + "+00:00"
+        $this.startDate = $this.startDate.ToString('s') + "+00:00"
+        $this.endDate = $this.endDate.ToString('s') + "+00:00"
+
+    }
+
+    CreateTestVos(){
+        Write-Host $this.tests.Count
 
         $test_case_nodes= $this.file.SelectNodes("//activity[@type='test-case']")
 
@@ -65,16 +72,16 @@ class RanorexXmlProcessor{
           return $comment
     }
 
-    execute($tests){
-        $thtests = $this.tests[0]
-        foreach($testVo in $tests){
+    execute(){
+        $this.tests = $this.tests[0]
+        foreach($testVo in $this.tests){
             $testVo.save();
             $testVo.changeWorkflowStatus(11);
         }
 
-        $testPlan = [XrayTestPlanVo]::new($tests)
+        $testPlan = [XrayTestPlanVo]::new($this.tests)
         $testPlan.create()
-        $testExecution = [XrayTestExecutorVo]::new($testPlan)
+        $testExecution = [XrayTestExecutorVo]::new($testPlan, $this.startDate, $this.endDate)
         $testExecution.create()
     }
 }
