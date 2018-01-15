@@ -83,6 +83,7 @@ class RanorexXmlProcessor{
     }
 
     CreateTestSet(){
+        $this.testSetVos = @() 
         $smartFolderNodes= $this.file.SelectNodes("//activity[@type='test-suite']/activity[@type='smart-folder']")
         [int]$count = 0
         $activtyType = ''
@@ -96,7 +97,7 @@ class RanorexXmlProcessor{
     SaveTestSetVos(){
         foreach ($testSetVo in $this.testSetVos) {
             Write-Host "Creating Test Set with " $testSetVo.tests.Count " tests..." 
-            $this.testSetVo.create()
+            $testSetVo.create()
             Write-Host "Created Test Set with " $testSetVo.tests.Count " tests" 
         }
     }
