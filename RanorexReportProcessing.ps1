@@ -4,6 +4,8 @@ class RanorexXmlProcessor{
     [System.Xml.XmlDocument]$file
     [XRayTestEntityVo[]]$testVos = @()
     [XRayTestSetEntityVo[]]$testSetVos = @()
+    [XrayTestPlanVo]$testPlanVo
+    [XrayTestExecutorVo]$testExecutionVo
 
     [string]$startDate;
     [string]$endDate;
@@ -38,7 +40,7 @@ class RanorexXmlProcessor{
         $testFields.description = $testCaseNode.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
         $testFields.summary = $testCaseNode.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
         $testFields.issuetype = [IssueType]::new("Test")
-        $testFields.project = [Project]::new([Credentials]::projectKey)
+        $testFields.project = [Project]::new([Constants]::projectKey)
         $testFields.customfield_10400 = [TestType]::new("Generic")
         $testFields.customfield_10403 = "generic test definition"
         [XRayTestEntityVo]$testVo = [XRayTestEntityVo]::new($testFields)
@@ -62,6 +64,7 @@ class RanorexXmlProcessor{
         Write-Host "Found: " + $testArr.Count
         return $testArr
     }
+
     [XRayTestEntityVo[]] handleSmartFolderNode($smartFolderNode){
         Write-Host "Processing Smart Folder Node...."
         [XRayTestEntityVo[]]$testArr = @()
@@ -131,6 +134,23 @@ class RanorexXmlProcessor{
         }
     }
 
+    CreateTestPlanVo(){
+        $this.testPlanVo = [XrayTestPlanVo]::new($this.testVos, $this.testSetVos)
+        
+    }
+
+    SaveTestPlanVo(){
+        $this.testPlanVo.create()
+    }
+
+    CreateTestExecutionVo(){
+        $this.testExecutionVo = [XrayTestExecutorVo]::new($this.testPlanVo, $this.startDate, $this.endDate)
+    }
+
+    SaveTestExecutionVo(){
+        $this.testExecutionVo.create()
+    }
+    
     [int]getTotalTestVos(){
         $count = 0
         $count = $this.testVos.Count;
@@ -162,12 +182,10 @@ class RanorexXmlProcessor{
         $this.CreateTestSetVos()
         $this.SaveTestVos()
         $this.SaveTestSetVos()
+        $this.CreateTestPlanVo();
+        $this.SaveTestPlanVo()
+        $this.CreateTestExecutionVo();
+        $this.SaveTestExecutionVo()
 
-
-
-        $testPlan = [XrayTestPlanVo]::new($this.testVos, $this.testSetVos)
-        $testPlan.create()
-        $testExecution = [XrayTestExecutorVo]::new($testPlan, $this.startDate, $this.endDate)
-        $testExecution.create()
     }
 }

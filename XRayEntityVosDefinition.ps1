@@ -101,7 +101,7 @@ class XrayTestPlanVo{
         $body = @{
             fields = @{
                 "project" = @{
-                    "key" = [Credentials]::projectKey
+                    "key" = [Constants]::projectKey
                 };
                 "summary" = "sumamry  at " + $(get-date -f MM-dd-yyyy_HH_mm_ss);
                 "description" = "Test Plan using REST";
@@ -150,7 +150,7 @@ class XRayTestSetEntityVo{
         $body = @{
             fields = @{
                 "project" = @{
-                    "key" = [Credentials]::projectKey
+                    "key" = [Constants]::projectKey
                 };
                 "summary" = "Created at " + $(get-date -f MM-dd-yyyy_HH_mm_ss) + " during Ranorex-XRay Integration using REST";
                 "description" = "Created at " + $(get-date -f MM-dd-yyyy_HH_mm_ss) + " during Ranorex-XRay Integration using REST";
@@ -196,11 +196,7 @@ class XRayTestEntityVo
 
     static [XRayTestEntityVo] getInstance()
     { 
-        return [XRayTestEntityVo]::new([Fields]::new([Project]::new([Credentials]::projectKey), "summary for " + ++[XRayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), "desc for " + [XRayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), [IssueType]::new("Test"), [TestType]::new("Generic"), "generic test definition"));
-    }
-
-    display(){
-        Write-Host "Display"
+        return [XRayTestEntityVo]::new([Fields]::new([Project]::new([Constants]::projectKey), "summary for " + ++[XRayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), "desc for " + [XRayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), [IssueType]::new("Test"), [TestType]::new("Generic"), "generic test definition"));
     }
 
     save(){
@@ -306,14 +302,16 @@ class Project{
 }
 
 class Constants{
+    
     static [string]$url = "https://jerry-test.wincor-nixdorf.com/rest/";
+    static [string]$projectKey = "PLAYTMSW";
+
 }
 
 class Credentials{
     static [string]$user = "bhansm";
     static [string]$password = "Mitz@#23mit";
-    static [string]$projectKey = "PLAYTMSW";
-
+    
     static [string] getEncodedValue(){
         $pair = "$([Credentials]::user):$([Credentials]::password)"
 	    $encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($pair))
@@ -338,21 +336,3 @@ $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
     }
 
 }
-
-<#$testVo1 = [XRayTestEntityVo]::getInstance()
-$testVo2 = [XRayTestEntityVo]::getInstance()
-$testVo3 = [XRayTestEntityVo]::getInstance()
-
-$testVos = @()
-$testVos = $testVos + $testVo1;
-$testVos = $testVos + $testVo2;
-$testVos = $testVos + $testVo3;
-
-foreach($testVo in $testVos){
-    <$testVo.save();
-    $testVo.changeWorkflowStatus(11);
-}
-
-$testPlan = [XrayTestPlanVo]::new($testVos)
-$testPlan.create()
-$testExecution = [XrayTestExecutorVo]::new($testPlan)#>
