@@ -3,8 +3,8 @@
 class RanorexXmlProcessor{
     [System.Xml.XmlDocument]$file
     [XRayTestEntityVo[]]$tests = @()
-    [datetime]$startDate;
-    [datetime]$endDate;
+    [string]$startDate;
+    [string]$endDate;
 
     RanorexXmlProcessor($filePath){
         [System.Xml.XmlDocument]$this.file = new-object System.Xml.XmlDocument
@@ -16,13 +16,13 @@ class RanorexXmlProcessor{
     
         $dataStr = $root_node.timestamp
         $dateFormat = "M/d/yyyy h:m:ss tt"
-        $this.startDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+        $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
 
         $dataStr = $root_node.endtime
-        $this.endDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+        $end = [datetime]::ParseExact($dataStr, $dateFormat, $null)
 
-        $this.startDate = $this.startDate.ToString('s') + "+00:00"
-        $this.endDate = $this.endDate.ToString('s') + "+00:00"
+        $this.startDate = $start.ToString('s') + "+00:00"
+        $this.endDate = $end.ToString('s') + "+00:00"
 
     }
 
@@ -31,8 +31,6 @@ class RanorexXmlProcessor{
         $this.StartDateEndDate()
 
         $test_case_nodes= $this.file.SelectNodes("//activity[@type='test-case']")
-
-
 
         $testFields = [Fields]::new()
         [int]$count = 0
