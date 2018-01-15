@@ -10,7 +10,7 @@
     }
 
     create(){
-        $url = "https://jerry-test.wincor-nixdorf.com/rest/raven/1.0/import/execution"
+        $url = [Constants]::url + "raven/1.0/import/execution"
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
@@ -66,7 +66,7 @@ class XrayTestPlanVo{
     }
 
     create(){
-        $url = "https://jerry-test.wincor-nixdorf.com/rest/api/2/issue"
+        $url = [Constants]::url + "api/2/issue"
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
@@ -127,7 +127,7 @@ class XRayTestEntityVo
     }
 
     save(){
-        $url = "https://jerry-test.wincor-nixdorf.com/rest/api/2/issue"
+        $url = [Constants]::url + "api/2/issue"
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
@@ -166,7 +166,7 @@ class XRayTestEntityVo
     }
 
     changeWorkflowStatus([int]$transitionId){
-        $url = "https://jerry-test.wincor-nixdorf.com/rest/api/2/issue/$($this.key)/transitions?expand=transitions.fields"
+        $url = [Constants]::url + "api/2/issue/$($this.key)/transitions?expand=transitions.fields"
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
@@ -226,6 +226,10 @@ class Project{
     Project([string]$key){
         $this.key = $key;
     }
+}
+
+class Constants{
+    static [string]$url = "https://jerry-test.wincor-nixdorf.com/rest/";
 }
 
 class Credentials{
