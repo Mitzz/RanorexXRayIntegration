@@ -70,10 +70,11 @@ class XRayTestSetEntityVo{
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
-
+       
         $testKey = @()
 
         foreach ($test in $this.tests) {
+            $test.save()
             $testKey = $testKey + $test.key;
         }
 

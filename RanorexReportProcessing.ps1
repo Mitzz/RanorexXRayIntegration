@@ -2,7 +2,9 @@
 
 class RanorexXmlProcessor{
     [System.Xml.XmlDocument]$file
-    [XRayTestEntityVo[]]$tests = @()
+    [XRayTestEntityVo[]]$testVos = @()
+    [XRayTestSetEntityVo[]]$testSetVos = @()
+
     [string]$startDate;
     [string]$endDate;
 
@@ -81,31 +83,22 @@ class RanorexXmlProcessor{
     }
 
     CreateTestSet(){
-        
         $smartFolderNodes= $this.file.SelectNodes("//activity[@type='test-suite']/activity[@type='smart-folder']")
         [int]$count = 0
         $activtyType = ''
         foreach ($smartFolderNode in $smartFolderNodes) {
             Write-Host "Processing Next SmartFolder"
-            [XRayTestEntityVo[]]$t = $this.handleSmartFolderNode($smartFolderNode)
-            Write-Host "Finished Next SmartFolder"
-          <#Write-Host $test_case_node.GetType() $test_case_node.testcontainername $test_case_node.iteration
-          Write-Host "Processing " (++$count)
-          $testFields = [Fields]::new()
-          $testFields.description = $test_case_node.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
-          $testFields.summary = $test_case_node.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
-          $testFields.issuetype = [IssueType]::new("Test")
-          $testFields.project = [Project]::new([Credentials]::projectKey)
-          $testFields.customfield_10400 = [TestType]::new("Generic")
-          $testFields.customfield_10403 = "generic test definition"
-          [XRayTestEntityVo]$testVo = [XRayTestEntityVo]::new($testFields)
-          $testVo.setStatus($test_case_node.result)
-          $comment = $this.getComment($test_case_node)
-          $testVo.setComment($comment)
-          $this.tests = $this.tests + $testVo
-          Write-Host $this.tests.Count#>
+            $this.testSetVos = $this.testSetVos + [XRayTestSetEntityVo]::new($this.handleSmartFolderNode($smartFolderNode))
+            Write-Host "Finished"
         }
+    }
 
+    SaveTestSetVos(){
+        foreach ($testSetVo in $this.testSetVos) {
+            Write-Host "Creating Test Set with " $testSetVo.tests.Count " tests..." 
+            $this.testSetVo.create()
+            Write-Host "Created Test Set with " $testSetVo.tests.Count " tests" 
+        }
     }
 
     CreateTestVos(){
