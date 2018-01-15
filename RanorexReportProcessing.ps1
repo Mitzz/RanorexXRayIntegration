@@ -165,7 +165,7 @@ class RanorexXmlProcessor{
 
 
 
-        $testPlan = [XrayTestPlanVo]::new($this.testVos + $this.testSetVos)
+        $testPlan = [XrayTestPlanVo]::new($this.testVos, $this.testSetVos)
         $testPlan.create()
         $testExecution = [XrayTestExecutorVo]::new($testPlan, $this.startDate, $this.endDate)
         $testExecution.create()

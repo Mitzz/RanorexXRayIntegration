@@ -75,7 +75,7 @@ class XrayTestPlanVo{
         }
 
         foreach($vo in $this.testSetVos) {
-            $keys = $keys + $vo.getTestKeys(
+            $keys = $keys + $vo.getTestKeys()
         }
         return $keys
     }
