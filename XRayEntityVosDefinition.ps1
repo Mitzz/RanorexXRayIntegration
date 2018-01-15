@@ -57,6 +57,47 @@
     }
 }
 
+
+class XrayTestPlanVo{
+    [string[]]$keys 
+    [string]$key
+
+    XrayTestPlanVo($vos){
+        $this.keys = @()
+        foreach($vo in $vos){
+            $this.keys = $this.keys + $vo.key
+        }
+    }
+
+    create(){
+        $url = [Constants]::url + "api/2/issue"
+        $Headers = @{
+		    Authorization = [Credentials]::getEncodedValue()
+	    }
+
+        $body = @{
+            fields = @{
+                "project" = @{
+                    "key" = [Credentials]::projectKey
+                };
+                "summary" = "sumamry  at " + $(get-date -f MM-dd-yyyy_HH_mm_ss);
+                "description" = "Test Plan using REST";
+                "issuetype" = @{
+                    "name" = "Test Plan"
+                 };
+                "customfield_10424" = $this.keys
+             }
+         }
+         ConvertTo-Json $body
+        [Credentials]::setProtocols()
+        Write-Host "Creating Test Plan...."
+        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
+	    $responseContent = ConvertFrom-Json ($response.Content)
+        $this.key = $responseContent.key
+        Write-Host $response
+    }
+}
+
 class XRayTestSetEntityVo{
     [XRayTestEntityVo[]]$tests
     [string]$key
@@ -75,6 +116,7 @@ class XRayTestSetEntityVo{
 
         foreach ($test in $this.tests) {
             $test.save()
+            $test.changeWorkflowStatus(11)
             $testKey = $testKey + $test.key;
         }
 
@@ -98,46 +140,7 @@ class XRayTestSetEntityVo{
 	    $responseContent = ConvertFrom-Json ($response.Content)
         $this.key = $responseContent.key
         Write-Host $response
-
     }
-}
-
-class XrayTestPlanVo{
-    [string[]]$keys
-    [string]$key
-
-    XrayTestPlanVo([string[]]$keys){
-        $this.keys = $keys
-    }
-
-    create(){
-        $url = [Constants]::url + "api/2/issue"
-        $Headers = @{
-		    Authorization = [Credentials]::getEncodedValue()
-	    }
-        $body = @{
-            fields = @{
-                "project" = @{
-                    "key" = [Credentials]::projectKey
-                };
-                "summary" = "sumamry  at " + $(get-date -f MM-dd-yyyy_HH_mm_ss);
-                "description" = "Test Plan using REST";
-                "issuetype" = @{
-                    "name" = "Test Plan"
-                 };
-                "customfield_10424" = $this.keys
-             }
-         }
-         ConvertTo-Json $body
-        [Credentials]::setProtocols()
-        Write-Host "Creating Test Plan...."
-        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
-	    $responseContent = ConvertFrom-Json ($response.Content)
-        $this.key = $responseContent.key
-        Write-Host $response
-
-    }
-
 }
 
 class XRayTestEntityVo

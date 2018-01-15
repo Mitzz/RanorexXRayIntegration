@@ -10,11 +10,11 @@ class RanorexXmlProcessor{
 
     RanorexXmlProcessor($filePath){
         [System.Xml.XmlDocument]$this.file = new-object System.Xml.XmlDocument
+        $this.file.load($filePath)
         $this.init()
     }
 
     init(){
-        $this.file.load("C:\Users\bhansm\Downloads\RanorexToXrayIntegration\Harald_SampleReports\testReport_HTML_junit\testReport\WebConsole_20171109_134715.html.data.xml")
         $this.StartDateEndDate()
     }
 
@@ -32,8 +32,6 @@ class RanorexXmlProcessor{
         $this.endDate = $end.ToString('s') + "+00:00"
 
     }
-
-
 
     [XRayTestEntityVo] handleTestCaseNode($testCaseNode){
         $testFields = [Fields]::new()
@@ -82,7 +80,7 @@ class RanorexXmlProcessor{
         return $testArr
     }
 
-    CreateTestSet(){
+    CreateTestSetVos(){
         $this.testSetVos = @() 
         $smartFolderNodes= $this.file.SelectNodes("//activity[@type='test-suite']/activity[@type='smart-folder']")
         [int]$count = 0
@@ -103,23 +101,46 @@ class RanorexXmlProcessor{
     }
 
     CreateTestVos(){
-        Write-Host $this.tests.Count
+        $this.testVos = @()
+        Write-Host $this.testVos.Count
         $testSuiteChildNodes= $this.file.SelectNodes("//activity[@type='test-suite']/child::node()")
         $activityType = ''
         $testFields = [Fields]::new()
         [int]$count = 0
         foreach ($testSuiteChildNode in $testSuiteChildNodes) {
             $activityType = $testSuiteChildNode.type
+            Write-Host "Activity Type under test suite " $activityType
             if($activityType -eq 'test-case'){
                 #Write-Host $test_case_node.GetType() $test_case_node.testcontainername $test_case_node.iteration
-                $this.tests = $this.tests + $this.handleTestCaseNode($testSuiteChildNode);
-            }
+                $this.testVos = $this.testVos + $this.handleTestCaseNode($testSuiteChildNode);
+            } elseif($activityType -eq 'iteration-container'){
+                foreach($t in $this.handleIterationContainerNode($testSuiteChildNode)){
+                    #Write-Host $test_case_node.GetType() $test_case_node.testcontainername $test_case_node.iteration
+                    $this.testVos = $this.testVos + $t;
+                }
+            }  
         }
-        Write-Host "Tests Count: " +  $this.tests.Count
+        Write-Host "Tests Count: " +  $this.testVos.Count
         
     }
 
-    
+    SaveTestVos(){
+        foreach ($testVo in $this.testVos) {
+            $testVo.save()
+            $testVo.changeWorkflowStatus(11);
+        }
+    }
+
+    [int]getTotalTestVos(){
+        $count = 0
+        $count = $this.testVos.Count;
+
+        foreach($testSet in $this.testSetVos){
+            $count = $count + $testSet.tests.Count
+        }
+        return $count
+    }
+
     [string] getComment($test_case_node){
           $comment = $null;
           $result = $test_case_node.result;
@@ -137,17 +158,14 @@ class RanorexXmlProcessor{
     }
 
     execute(){
-        $this.tests = $this.tests[0]
-        $testKeys = @()
-        foreach($testVo in $this.tests){
-            $testVo.save();
-            $testVo.changeWorkflowStatus(11);
-        }
+        $this.CreateTestVos()
+        $this.CreateTestSetVos()
+        $this.SaveTestVos()
+        $this.SaveTestSetVos()
 
 
 
-
-        $testPlan = [XrayTestPlanVo]::new($this.tests)
+        $testPlan = [XrayTestPlanVo]::new($this.testVos + $this.testSetVos)
         $testPlan.create()
         $testExecution = [XrayTestExecutorVo]::new($testPlan, $this.startDate, $this.endDate)
         $testExecution.create()
