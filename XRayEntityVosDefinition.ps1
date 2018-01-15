@@ -16,7 +16,7 @@
 	    }
 
         $tests = @()
-        foreach ($test in $this.testPlanVo.tests) {
+        foreach ($test in $this.testPlanVo.getTestVos()) {
             $status = $test.getStatus()
             $comment = $test.getComment()
             #Write-Host $status
@@ -59,14 +59,37 @@
 
 
 class XrayTestPlanVo{
-    [string[]]$keys 
+    [XRayTestEntityVo[]]$testVos
+    [XRayTestSetEntityVo[]]$testSetVos
     [string]$key
 
-    XrayTestPlanVo($vos){
-        $this.keys = @()
-        foreach($vo in $vos){
-            $this.keys = $this.keys + $vo.key
+    XrayTestPlanVo($testVos, $testSetVos){
+        $this.testVos = $testVos
+        $this.testSetVos = $testSetVos
+    }
+
+    [string[]] getKeys(){
+        [string[]]$keys = @()
+        foreach($vo in $this.testVos) {
+            $keys = $keys + $vo.key
         }
+
+        foreach($vo in $this.testSetVos) {
+            $keys = $keys + $vo.getTestKeys(
+        }
+        return $keys
+    }
+
+    [XRayTestEntityVo[]] getTestVos(){
+        [XRayTestEntityVo[]]$vos = @()
+        foreach($vo in $this.testVos) {
+            $vos = $vos + $vo
+        }
+
+        foreach($vo in $this.testSetVos) {
+            $vos = $vos + $vo.getTestVos()
+        }
+        return $vos
     }
 
     create(){
@@ -85,7 +108,7 @@ class XrayTestPlanVo{
                 "issuetype" = @{
                     "name" = "Test Plan"
                  };
-                "customfield_10424" = $this.keys
+                "customfield_10424" = $this.getKeys()
              }
          }
          ConvertTo-Json $body
@@ -104,6 +127,10 @@ class XRayTestSetEntityVo{
 
     XRayTestSetEntityVo([XRayTestEntityVo[]]$tests){
         $this.tests = $tests
+    }
+
+    [XRayTestEntityVo[]] getTestVos(){
+        return $this.tests
     }
 
     create(){
@@ -140,6 +167,14 @@ class XRayTestSetEntityVo{
 	    $responseContent = ConvertFrom-Json ($response.Content)
         $this.key = $responseContent.key
         Write-Host $response
+    }
+
+    [string[]] getTestKeys(){
+        $keys = @()
+        foreach($vo in $this.tests) {
+            $keys = $keys + $vo.key
+        }
+        return $keys
     }
 }
 
