@@ -1,0 +1,3 @@
+Import-Module C:\Ankit_office_data\ConnectedInsights_net\powershell\Remove-AzureStorageBlobFolder.ps1
+Get-help -Name Remove-AzureStorageBlobFolder -Full
+exit

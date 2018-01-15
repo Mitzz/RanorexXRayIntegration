@@ -1,0 +1,27 @@
+### Blob Related
+azure-subscription-name=test
+testng-reporter-log-to-console=true
+azure-storage-account-name=dieboldstorage
+azure-storage-account-key=XduaB2/EoIuBuL1Ur4UbWDjHKRcr6EQS6+PivkLHMqgxdEJCvXWa/gsTHjYzLMuYV8w8OiVnc/gH5A6aB1T9YQ==
+azure-storage-container-name=diebold-qa3
+azure-storage-blob-name=connected_insights/QA3
+
+### FTP Related
+azure-storage-ftp-username=ftpadmin
+azure-storage-ftp-password=ftpadmin
+azure-storage-ftp-hostname=52.187.112.108
+azure-storage-ftp-fingureprint=ssh-ed25519 256 26:45:9d:f3:de:c4:a3:c0:ea:d6:4a:ef:7b:e8:5b:5d
+azure-storage-ftp-location=/files/QA3/*
+
+### Image magick Path
+image-magick-path=C:/Program\ Files/ImageMagick-7.0.7-Q16
+
+##Test Case Related
+path-to-testcases=../testcases
+testcases-screenshot-folder-location=../testcases-output
+path-to-testcase-csv-file=../testcases.csv
+download-azure-storage-blob=true
+image-magick-threshold-value=25
+
+chrome.browser.width=1366
+chrome.browser.height=768
