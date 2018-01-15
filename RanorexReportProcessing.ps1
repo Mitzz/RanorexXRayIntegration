@@ -34,7 +34,6 @@ class RanorexXmlProcessor{
 
 
     [XRayTestEntityVo] handleTestCaseNode($testCaseNode){
-        [XRayTestEntityVo]$testVo = [XRayTestEntityVo]::new();
         $testFields = [Fields]::new()
         $testFields.description = $testCaseNode.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
         $testFields.summary = $testCaseNode.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
@@ -46,8 +45,7 @@ class RanorexXmlProcessor{
         $testVo.setStatus($testCaseNode.result)
         $comment = $this.getComment($testCaseNode)
         $testVo.setComment($comment)
-        $this.tests = $this.tests + $testVo
-        Write-Host $this.tests.Count
+
         return $testVo
     }
 
@@ -74,20 +72,23 @@ class RanorexXmlProcessor{
                 $testArr = $testArr + $this.handleTestCaseNode($childNodeOfsmartFolder)
             } elseif ($activityType -eq 'iteration-container'){
                 $testArr = $testArr + $this.handleIterationContainerNode($childNodeOfsmartFolder)
+            } elseif ($activityType -eq 'smart-folder'){
+                $testArr = $testArr + $this.handleSmartFolderNode($childNodeOfsmartFolder)
             }
         }
-        Write-Host "Found: " + $testArr.Count
+        Write-Host "Found: " $testArr.Count
         return $testArr
     }
 
     CreateTestSet(){
         
-        $smartFolderNodes= $this.file.SelectNodes("//activity[@type='smart-folder']")
+        $smartFolderNodes= $this.file.SelectNodes("//activity[@type='test-suite']/activity[@type='smart-folder']")
         [int]$count = 0
         $activtyType = ''
         foreach ($smartFolderNode in $smartFolderNodes) {
-            
+            Write-Host "Processing Next SmartFolder"
             [XRayTestEntityVo[]]$t = $this.handleSmartFolderNode($smartFolderNode)
+            Write-Host "Finished Next SmartFolder"
           <#Write-Host $test_case_node.GetType() $test_case_node.testcontainername $test_case_node.iteration
           Write-Host "Processing " (++$count)
           $testFields = [Fields]::new()
