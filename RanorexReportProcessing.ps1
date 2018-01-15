@@ -28,6 +28,7 @@ class RanorexXmlProcessor{
 
     CreateTestVos(){
         Write-Host $this.tests.Count
+        $this.StartDateEndDate()
 
         $test_case_nodes= $this.file.SelectNodes("//activity[@type='test-case']")
 
