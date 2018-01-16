@@ -1,0 +1,61 @@
+First Test Case Mapping to Test Vo of XRAY
+	Structure of TestVo for XRAY
+		status - String
+			
+		comment - String
+			from status
+		fields - Field
+		
+Challenges
+	- Hard Coded Vo
+		Creating Powershell PSObject
+		Adding property to Powershell PSObject
+		Calling function
+		Adding property which is an object
+		Convert to JSON with object composition(Object inside object)
+		Structure of XML XPAth to select nodes for extracting data
+		Rest API - Key Value of JSON (Data Structure) 
+		Removal of some property while conversion to JSON
+		Import Code from another script
+		Adding property to an object of a class in Powershell
+		If not working try with hard code values
+		Test with Small Datasets
+		Restart Session
+		Mapping of Status (Critical Part)
+		If Failed what is reason
+		REST - Extra Parameter in JSON(Is it ignored? or some error)
+		Make changes in other class to get actual data instead of hard coded value when tested earlier
+		Date Conversion
+		Multiple Execution of same program. How to avoid duplicate. Identification of an entity
+		ini file
+		
+C:\Users\bhansm\Documents\My Received Files\powershell		
+cd 'C:\Users\bhansm\Desktop\XRAYRanorex\src'
+. .\Ini.ps1
+. .\XRayEntityVosDefinition.ps1
+. .\RanorexReportProcessing.ps1
+
+$vo = [RanorexXmlProcessor]::new("C:\Users\bhansm\Desktop\XRAYRanorex\reports\WebConsole_20171109_134715.html.data.xml")
+$vo = [RanorexXmlProcessor]::new("C:\Users\bhansm\Desktop\XRAYRanorex\reports\RCPConsole_20171031_103925.rxlog.data.xml")
+$vo.CreateTestVos()
+$vo.execute()
+
+$tests = Create-TestVos
+execute($tests)
+
+$dataStr = "10/31/2017 10:39:25 AM"
+$dateFormat = "MM/dd/yyyy hh:mm:ss tt"
+$startDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+
+To be discuss
+	What about ignored status
+
+$dataStr = $root_node.timestamp
+$dateFormat = "MM/dd/yyyy hh:mm:ss tt"
+$startDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+
+$dataStr = $root_node.endtime
+$endDate = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+
+$startTime = $startDate.ToString('s') + "+00:00"
+$endTime = $endDate.ToString('s') + "+00:00"
