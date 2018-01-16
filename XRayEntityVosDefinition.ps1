@@ -1,4 +1,6 @@
-﻿class XrayTestExecutorVo{
+﻿$ConfigFile = Get-IniContent "C:\Users\bhansm\Desktop\XRAYRanorex\config.ini"
+
+class XrayTestExecutorVo{
     [XrayTestPlanVo]$testPlanVo
     [string]$startDate
     [string]$endDate
@@ -303,14 +305,14 @@ class Project{
 
 class Constants{
     
-    static [string]$url = "https://jerry-test.wincor-nixdorf.com/rest/";
-    static [string]$projectKey = "PLAYTMSW";
+    static [string]$url = $ConfigFile["server"]["url"];
+    static [string]$projectKey = $ConfigFile["project"]["key"];
 
 }
 
 class Credentials{
-    static [string]$user = "bhansm";
-    static [string]$password = "Mitz@#23mit";
+    static [string]$user = $ConfigFile["credentials"]["user"];
+    static [string]$password = $ConfigFile["credentials"]["password"];
     
     static [string] getEncodedValue(){
         $pair = "$([Credentials]::user):$([Credentials]::password)"
