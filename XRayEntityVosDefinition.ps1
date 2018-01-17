@@ -1,4 +1,5 @@
-﻿$ConfigFile = Get-IniContent "C:\Users\bhansm\Desktop\XRAYRanorex\config.ini"
+﻿<# https://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91#content #>
+$ConfigFile = Get-IniContent $PSScriptRoot"\XRAYRanorex\config.ini"
 
 class XrayTestExecutorVo{
     [XrayTestPlanVo]$testPlanVo
@@ -305,8 +306,9 @@ class Project{
 
 class Constants{
     
-    static [string]$url = $ConfigFile["server"]["url"];
+    static [string]$url = $ConfigFile["server"]["url"] + "/rest/";
     static [string]$projectKey = $ConfigFile["project"]["key"];
+    static [string]$reportFilePath = $ConfigFile["report"]["filepath"];
 
 }
 

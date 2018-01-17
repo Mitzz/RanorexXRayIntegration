@@ -189,3 +189,5 @@ class RanorexXmlProcessor{
 
     }
 }
+
+$vo = [RanorexXmlProcessor]::new([Constants]::reportFilePath)

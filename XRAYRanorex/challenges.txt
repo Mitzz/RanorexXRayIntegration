@@ -28,9 +28,9 @@ Challenges
 		Date Conversion
 		Multiple Execution of same program. How to avoid duplicate. Identification of an entity
 		ini file
+		Relative File Path Resolver
 		
-C:\Users\bhansm\Documents\My Received Files\powershell		
-cd 'C:\Users\bhansm\Desktop\XRAYRanorex\src'
+cd 'C:\Users\bhansm\Documents\My Received Files\powershell'
 . .\Ini.ps1
 . .\XRayEntityVosDefinition.ps1
 . .\RanorexReportProcessing.ps1
