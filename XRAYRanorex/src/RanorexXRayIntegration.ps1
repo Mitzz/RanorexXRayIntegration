@@ -111,14 +111,17 @@ $ConfigPath = Join-Path -Path $PSScriptRoot -ChildPath "config.ini" -Resolve
 $ConfigFile = Get-IniContent $ConfigPath
 
 class XrayTestExecutionEntityVo{
-    [XrayTestPlanEntityVo]$testPlanVo
+    [string]$name
     [string]$startDate
     [string]$endDate
+    [XrayTestPlanEntityVo]$testPlanVo
+    
 
-    XrayTestExecutionEntityVo([XrayTestPlanEntityVo]$testPlanVo, $startDate, $endDate){
-        $this.testPlanVo = $testPlanVo
+    XrayTestExecutionEntityVo($name, $startDate, $endDate, [XrayTestPlanEntityVo]$testPlanVo){
+        $this.name = $name
         $this.startDate = $startDate
         $this.endDate = $endDate
+        $this.testPlanVo = $testPlanVo
     }
 
     create(){
@@ -146,7 +149,7 @@ class XrayTestExecutionEntityVo{
 
         $body = @{
             "info" = @{
-            "summary" = "Created during importing ranorex result";
+            "summary" = $this.name + "(Created during importing ranorex result using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
             "description" = "This execution is automatically created when importing execution results from an external source";
             "version" = [Constants]::projectVersion;
             "user" = "qtp";
@@ -158,13 +161,10 @@ class XrayTestExecutionEntityVo{
           };
           "tests" = $tests
         }
-        Write-Host (ConvertTo-Json $body)
-
         [Credentials]::setProtocols()
-        Write-Host "Creating Test Execution Plan"
+        Write-Host "Test Execution Plan Creation Started."
         $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
-	    #$responseContent = ConvertFrom-Json ($response.Content)
-        Write-Host $response
+	    Write-Host "Test Execution Plan Creation Ended."
 
     }
 }
@@ -215,21 +215,20 @@ class XrayTestPlanEntityVo{
                 "project" = @{
                     "key" = [Constants]::projectKey
                 };
-                "summary" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
-                "description" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
+                "summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+                "description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
                 "issuetype" = @{
                     "name" = "Test Plan"
                  };
                 "customfield_10424" = $this.getKeys()
              }
          }
-         ConvertTo-Json $body
         [Credentials]::setProtocols()
-        Write-Host "Creating Test Plan...."
+        Write-Host "Test Plan Creation Started."
         $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
 	    $responseContent = ConvertFrom-Json ($response.Content)
         $this.key = $responseContent.key
-        Write-Host $response
+        Write-Host "Test Plan Creation Done."
     }
 }
 
@@ -264,21 +263,21 @@ class XrayTestSetEntityVo{
                 "project" = @{
                     "key" = [Constants]::projectKey
                 };
-                "summary" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
-                "description" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
+                "summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+                "description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
                 "issuetype" = @{
                     "name" = "Test Set"
                  };
                 "customfield_10410" = $testKey
              }
          }
-         ConvertTo-Json $body
-        [Credentials]::setProtocols()
-        Write-Host "Creating Test Set...."
+         
+         [Credentials]::setProtocols()
+        Write-Host "Test Set Creation Started."
         $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
 	    $responseContent = ConvertFrom-Json ($response.Content)
         $this.key = $responseContent.key
-        Write-Host $response
+        Write-Host "Test Set Creation Done."
     }
 
     [string[]] getTestKeys(){
@@ -308,7 +307,7 @@ class XrayTestEntityVo
 
     static [XrayTestEntityVo] getInstance()
     { 
-        return [XrayTestEntityVo]::new([Fields]::new([Project]::new([Constants]::projectKey), "summary for " + ++[XrayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), "desc for " + [XrayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), [IssueType]::new("Test"), [TestType]::new("Generic"), "generic test definition"));
+        return [XrayTestEntityVo]::new([Fields]::new([Project]::new([Constants]::projectKey), "summary for " + ++[XrayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), "desc for " + [XrayTestEntityVo]::count + " at " + $([Constants]::currentDate), [IssueType]::new("Test"), [TestType]::new("Generic"), "generic test definition"));
     }
 
     save(){
@@ -316,14 +315,17 @@ class XrayTestEntityVo
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
+        $this.fields.summary = $this.fields.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")"
+        $this.fields.description = $this.fields.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")"
+
         [Credentials]::setProtocols()
-        Write-Host "Creating Test..."
+        Write-Host "Test Creation Started."
         $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $this) -ContentType "application/json" 
 	    $responseContent = ConvertFrom-Json ($response.Content)
         $this.id = $responseContent.id
         $this.key = $responseContent.key
         $this.self = $responseContent.self
-        Write-Host $response
+        Write-Host "Test Creation Done."
     }
 
     [string]getComment(){
@@ -361,10 +363,10 @@ class XrayTestEntityVo
             }
         }
         [Credentials]::setProtocols()
-        Write-Host "Test Transition" 
+        Write-Host "Test Transition Started." 
         $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
 	    #$responseContent = ConvertFrom-Json ($response.Content)
-        Write-Host $response
+        Write-Host "Test Transition Done."
     }
 }
 
@@ -419,8 +421,19 @@ class Constants{
     static [string]$projectKey = $ConfigFile["project"]["key"];
     static [string]$projectVersion = $ConfigFile["project"]["version"];
     static [string]$reportFilePath = $ConfigFile["report"]["filepath"];
-    static [string]$commonDateFormat = "dd-MM-yyyy HH:mm:ss";
+    static [string]$currentDateFormat = "dd-MMM-yyyy HH:mm:ss";
+    static [string]$currentDate = $(Get-Date).ToString([Constants]::currentDateFormat);
+
+    static Reload(){
+        [Constants]::url = $global:ConfigFile["server"]["url"] + "/rest/";
+        [Constants]::projectKey = $global:ConfigFile["project"]["key"];
+        [Constants]::projectVersion = $global:ConfigFile["project"]["version"];
+        [Constants]::reportFilePath = $global:ConfigFile["report"]["filepath"];
+        
+    }
 }
+
+[Constants]::Reload()
 
 class Credentials{
     static [string]$user = $ConfigFile["credentials"]["user"];
@@ -461,6 +474,7 @@ class RanorexXmlProcessor{
 
     [string]$startDate;
     [string]$endDate;
+    [string]$suiteName;
 
     RanorexXmlProcessor($filePath){
         [System.Xml.XmlDocument]$this.file = new-object System.Xml.XmlDocument
@@ -469,12 +483,20 @@ class RanorexXmlProcessor{
     }
 
     init(){
-        $this.StartDateEndDate()
+        $this.PopulateSuiteInfo()
     }
 
-    StartDateEndDate(){
-        $root_node = $this.file.SelectNodes("//activity[@type='root']")
-    
+    PopulateSuiteInfo(){
+        $this.RootNodeHandler($this.file.SelectNodes("//activity[@type='root']"))
+        $suiteNode = $this.file.SelectNodes("//activity[@type='root']/activity[@type='test-suite']")
+        $this.TestSuiteNodeHandler($suiteNode)
+    }
+
+    TestSuiteNodeHandler($suiteNode){
+        $this.suiteName = $suiteNode.testsuitename
+    }
+
+    RootNodeHandler($root_node){
         $dataStr = $root_node.timestamp
         $dateFormat = "M/d/yyyy h:m:ss tt"
         $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
@@ -484,17 +506,16 @@ class RanorexXmlProcessor{
 
         $this.startDate = $start.ToString('s') + "+00:00"
         $this.endDate = $end.ToString('s') + "+00:00"
-
     }
 
     [XrayTestEntityVo] handleTestCaseNode($testCaseNode){
         $testFields = [Fields]::new()
-        $testFields.description = $testCaseNode.testcontainername + " (Created during Ranorex-XRay Integration using REST at " + $(get-date -f [Constants]::commonDateFormat) + ")"
-        $testFields.summary = $testCaseNode.testcontainername + " (Created during Ranorex-XRay Integration using REST at " + $(get-date -f [Constants]::commonDateFormat) + ")"
+        $testFields.description = $testCaseNode.testcontainername
+        $testFields.summary = $testCaseNode.testcontainername
         $testFields.issuetype = [IssueType]::new("Test")
         $testFields.project = [Project]::new([Constants]::projectKey)
         $testFields.customfield_10400 = [TestType]::new("Generic")
-        $testFields.customfield_10403 = "generic test definition"
+        $testFields.customfield_10403 = "Generic test definition"
         [XrayTestEntityVo]$testVo = [XrayTestEntityVo]::new($testFields)
         $testVo.setStatus($testCaseNode.result)
         $comment = $this.getComment($testCaseNode)
@@ -504,7 +525,7 @@ class RanorexXmlProcessor{
     }
 
     [XrayTestEntityVo[]] handleIterationContainerNode($iterationContainerNode){
-        Write-Host "Processing Iteration Container Node...."
+        #Write-Host "Processing Iteration Container Node...."
         [XrayTestEntityVo[]]$testArr = @()
         [string]$activityType = "";
         foreach ($childNodeOfIterationContainer in $iterationContainerNode.ChildNodes) {
@@ -513,12 +534,12 @@ class RanorexXmlProcessor{
                 $testArr = $testArr + $this.handleTestCaseNode($childNodeOfIterationContainer)
             }
         }
-        Write-Host "Found: " + $testArr.Count
+        #Write-Host "Found: " + $testArr.Count
         return $testArr
     }
 
     [XrayTestEntityVo[]] handleSmartFolderNode($smartFolderNode){
-        Write-Host "Processing Smart Folder Node...."
+        #Write-Host "Processing Smart Folder Node...."
         [XrayTestEntityVo[]]$testArr = @()
         [string]$activityType = "";
         foreach ($childNodeOfsmartFolder in $smartFolderNode.ChildNodes) {
@@ -529,9 +550,9 @@ class RanorexXmlProcessor{
                 $testArr = $testArr + $this.handleIterationContainerNode($childNodeOfsmartFolder)
             } elseif ($activityType -eq 'smart-folder'){
                 $testArr = $testArr + $this.handleSmartFolderNode($childNodeOfsmartFolder)
-            }
+         cd    }
         }
-        Write-Host "Found: " $testArr.Count
+        #Write-Host "Found: " $testArr.Count
         return $testArr
     }
 
@@ -541,30 +562,30 @@ class RanorexXmlProcessor{
         [int]$count = 0
         $activtyType = ''
         foreach ($smartFolderNode in $smartFolderNodes) {
-            Write-Host "Processing Next SmartFolder"
+            #Write-Host "Processing Next SmartFolder"
             $this.testSetVos = $this.testSetVos + [XrayTestSetEntityVo]::new($this.handleSmartFolderNode($smartFolderNode))
-            Write-Host "Finished"
+            #Write-Host "Finished"
         }
     }
 
     SaveTestSetVos(){
         foreach ($testSetVo in $this.testSetVos) {
-            Write-Host "Creating Test Set with " $testSetVo.tests.Count " tests..." 
+            #Write-Host "Creating Test Set with " $testSetVo.tests.Count " tests..." 
             $testSetVo.create()
-            Write-Host "Created Test Set with " $testSetVo.tests.Count " tests" 
+            #Write-Host "Created Test Set with " $testSetVo.tests.Count " tests" 
         }
     }
 
     CreateTestVos(){
         $this.testVos = @()
-        Write-Host $this.testVos.Count
+        #Write-Host $this.testVos.Count
         $testSuiteChildNodes= $this.file.SelectNodes("//activity[@type='test-suite']/child::node()")
         $activityType = ''
         $testFields = [Fields]::new()
         [int]$count = 0
         foreach ($testSuiteChildNode in $testSuiteChildNodes) {
             $activityType = $testSuiteChildNode.type
-            Write-Host "Activity Type under test suite " $activityType
+            #Write-Host "Activity Type under test suite " $activityType
             if($activityType -eq 'test-case'){
                 #Write-Host $test_case_node.GetType() $test_case_node.testcontainername $test_case_node.iteration
                 $this.testVos = $this.testVos + $this.handleTestCaseNode($testSuiteChildNode);
@@ -575,7 +596,7 @@ class RanorexXmlProcessor{
                 }
             }  
         }
-        Write-Host "Tests Count: " +  $this.testVos.Count
+        #Write-Host "Tests Count: " +  $this.testVos.Count
         
     }
 
@@ -596,7 +617,7 @@ class RanorexXmlProcessor{
     }
 
     CreateTestExecutionVo(){
-        $this.testExecutionVo = [XrayTestExecutionEntityVo]::new($this.testPlanVo, $this.startDate, $this.endDate)
+        $this.testExecutionVo = [XrayTestExecutionEntityVo]::new($this.suiteName, $this.startDate, $this.endDate, $this.testPlanVo)
     }
 
     SaveTestExecutionVo(){
@@ -643,3 +664,6 @@ class RanorexXmlProcessor{
 }
 
 $vo = [RanorexXmlProcessor]::new([Constants]::reportFilePath)
+Write-Host "Integration Started."
+$vo.execute()
+Write-Host "Integration Done Successfully."

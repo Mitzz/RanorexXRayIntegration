@@ -40,7 +40,7 @@ cd 'C:\Users\bhansm\Documents\My Received Files\powershell'
 . .\RanorexReportProcessing.ps1
 
 cd 'C:\Users\bhansm\Documents\My Received Files\powershell\XRAYRanorex\src'
-
+. .\RanorexXRayIntegration.ps1
 
 $vo = [RanorexXmlProcessor]::new("C:\Users\bhansm\Desktop\XRAYRanorex\reports\WebConsole_20171109_134715.html.data.xml")
 $vo = [RanorexXmlProcessor]::new("C:\Users\bhansm\Desktop\XRAYRanorex\reports\RCPConsole_20171031_103925.rxlog.data.xml")

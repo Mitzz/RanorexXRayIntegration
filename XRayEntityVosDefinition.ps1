@@ -318,7 +318,17 @@ class Constants{
     static [string]$reportFilePath = $ConfigFile["report"]["filepath"];
     static [string]$currentDateFormat = "dd-MMM-yyyy HH:mm:ss";
     static [string]$currentDate = $(Get-Date).ToString([Constants]::currentDateFormat);
+    
+    static Reload(){
+        [Constants]::url = $global:ConfigFile["server"]["url"] + "/rest/";
+        [Constants]::projectKey = $global:ConfigFile["project"]["key"];
+        [Constants]::projectVersion = $global:ConfigFile["project"]["version"];
+        [Constants]::reportFilePath = $global:ConfigFile["report"]["filepath"];
+        
+    }
 }
+
+[Constants]::Reload()
 
 class Credentials{
     static [string]$user = $ConfigFile["credentials"]["user"];
