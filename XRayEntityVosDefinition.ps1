@@ -42,13 +42,13 @@ class XrayTestExecutionEntityVo{
             "info" = @{
             "summary" = $this.name + "(Created during importing ranorex result using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
             "description" = "This execution is automatically created when importing execution results from an external source";
-            "version" = [Constants]::projectVersion;
+            #"version" = [Constants]::projectVersion;
             "user" = "qtp";
-            "revision" = "Revision Number";
+            #"revision" = "Revision Number";
             "startDate" = $this.startDate;
             "finishDate" = $this.endDate;
             "testPlanKey" = $this.testPlanVo.key;
-            "testEnvironments" = @("Env1", "Env2")
+            #"testEnvironments" = @("Env1", "Env2")
           };
           "tests" = $tests
         }
