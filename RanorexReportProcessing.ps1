@@ -9,6 +9,7 @@ class RanorexXmlProcessor{
 
     [string]$startDate;
     [string]$endDate;
+    [string]$suiteName;
 
     RanorexXmlProcessor($filePath){
         [System.Xml.XmlDocument]$this.file = new-object System.Xml.XmlDocument
@@ -17,12 +18,20 @@ class RanorexXmlProcessor{
     }
 
     init(){
-        $this.StartDateEndDate()
+        $this.PopulateSuiteInfo()
     }
 
-    StartDateEndDate(){
-        $root_node = $this.file.SelectNodes("//activity[@type='root']")
-    
+    PopulateSuiteInfo(){
+        $this.RootNodeHandler($this.file.SelectNodes("//activity[@type='root']"))
+        $suiteNode = $this.file.SelectNodes("//activity[@type='root']/activity[@type='test-suite']")
+        $this.TestSuiteNodeHandler($suiteNode)
+    }
+
+    TestSuiteNodeHandler($suiteNode){
+        $this.suiteName = $suiteNode.testsuitename
+    }
+
+    RootNodeHandler($root_node){
         $dataStr = $root_node.timestamp
         $dateFormat = "M/d/yyyy h:m:ss tt"
         $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
@@ -32,7 +41,6 @@ class RanorexXmlProcessor{
 
         $this.startDate = $start.ToString('s') + "+00:00"
         $this.endDate = $end.ToString('s') + "+00:00"
-
     }
 
     [XrayTestEntityVo] handleTestCaseNode($testCaseNode){
@@ -144,7 +152,7 @@ class RanorexXmlProcessor{
     }
 
     CreateTestExecutionVo(){
-        $this.testExecutionVo = [XrayTestExecutionEntityVo]::new($this.testPlanVo, $this.startDate, $this.endDate)
+        $this.testExecutionVo = [XrayTestExecutionEntityVo]::new($this.suiteName, $this.startDate, $this.endDate, $this.testPlanVo)
     }
 
     SaveTestExecutionVo(){

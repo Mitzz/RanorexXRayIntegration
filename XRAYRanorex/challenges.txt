@@ -30,6 +30,8 @@ Challenges
 		Multiple Execution of same program. How to avoid duplicate. Identification of an entity
 		Reading ini file
 		Relative File Path Resolver
+		Common Code at one place. Changes taking time.A lot of boring work
+		Changing report file in config file and testing the program for the changed file
 		
 cd 'C:\Users\bhansm\Documents\My Received Files\powershell'
 . .\Ini.ps1

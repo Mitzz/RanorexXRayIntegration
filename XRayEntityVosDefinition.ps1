@@ -2,14 +2,17 @@
 $ConfigFile = Get-IniContent $PSScriptRoot"\config.ini"
 
 class XrayTestExecutionEntityVo{
-    [XrayTestPlanEntityVo]$testPlanVo
+    [string]$name
     [string]$startDate
     [string]$endDate
+    [XrayTestPlanEntityVo]$testPlanVo
+    
 
-    XrayTestExecutionEntityVo([XrayTestPlanEntityVo]$testPlanVo, $startDate, $endDate){
-        $this.testPlanVo = $testPlanVo
+    XrayTestExecutionEntityVo($name, $startDate, $endDate, [XrayTestPlanEntityVo]$testPlanVo){
+        $this.name = $name
         $this.startDate = $startDate
         $this.endDate = $endDate
+        $this.testPlanVo = $testPlanVo
     }
 
     create(){
@@ -37,7 +40,7 @@ class XrayTestExecutionEntityVo{
 
         $body = @{
             "info" = @{
-            "summary" = "Created during importing ranorex result using REST at " + $([Constants]::currentDate);
+            "summary" = $this.name + "(Created during importing ranorex result using REST at " + $([Constants]::currentDate) + ")";
             "description" = "This execution is automatically created when importing execution results from an external source";
             "version" = [Constants]::projectVersion;
             "user" = "qtp";
