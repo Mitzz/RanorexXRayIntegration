@@ -31,7 +31,8 @@ Challenges
 		Reading ini file
 		Relative File Path Resolver
 		Common Code at one place. Changes taking time.A lot of boring work
-		Changing report file in config file and testing the program for the changed file
+		Changing report file in config file and testing the program for the changed file in the same session
+		Common Code but wrt time it is not a good idea
 		
 cd 'C:\Users\bhansm\Documents\My Received Files\powershell'
 . .\Ini.ps1

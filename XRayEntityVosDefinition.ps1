@@ -40,7 +40,7 @@ class XrayTestExecutionEntityVo{
 
         $body = @{
             "info" = @{
-            "summary" = $this.name + "(Created during importing ranorex result using REST at " + $([Constants]::currentDate) + ")";
+            "summary" = $this.name + "(Created during importing ranorex result using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
             "description" = "This execution is automatically created when importing execution results from an external source";
             "version" = [Constants]::projectVersion;
             "user" = "qtp";
@@ -109,8 +109,8 @@ class XrayTestPlanEntityVo{
                 "project" = @{
                     "key" = [Constants]::projectKey
                 };
-                "summary" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
-                "description" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
+                "summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+                "description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
                 "issuetype" = @{
                     "name" = "Test Plan"
                  };
@@ -158,8 +158,8 @@ class XrayTestSetEntityVo{
                 "project" = @{
                     "key" = [Constants]::projectKey
                 };
-                "summary" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
-                "description" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
+                "summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+                "description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
                 "issuetype" = @{
                     "name" = "Test Set"
                  };
@@ -210,6 +210,9 @@ class XrayTestEntityVo
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
+        $this.fields.summary = $this.fields.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")"
+        $this.fields.description = $this.fields.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")"
+
         [Credentials]::setProtocols()
         Write-Host "Creating Test..."
         $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $this) -ContentType "application/json" 

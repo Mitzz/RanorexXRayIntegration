@@ -45,8 +45,8 @@ class RanorexXmlProcessor{
 
     [XrayTestEntityVo] handleTestCaseNode($testCaseNode){
         $testFields = [Fields]::new()
-        $testFields.description = $testCaseNode.testcontainername + " (Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate) + ")"
-        $testFields.summary = $testCaseNode.testcontainername + " (Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate) + ")"
+        $testFields.description = $testCaseNode.testcontainername
+        $testFields.summary = $testCaseNode.testcontainername
         $testFields.issuetype = [IssueType]::new("Test")
         $testFields.project = [Project]::new([Constants]::projectKey)
         $testFields.customfield_10400 = [TestType]::new("Generic")
