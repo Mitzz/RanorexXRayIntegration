@@ -22,18 +22,22 @@ Challenges
 		Test with Small Datasets
 		Restart Session
 		Mapping of Status (Critical Part)
+		Mapping fields of one tool to another tool(Structure might be different. Field name different. Scattered across structure)
 		If Failed what is reason
 		REST - Extra Parameter in JSON(Is it ignored? or some error)
 		Make changes in other class to get actual data instead of hard coded value when tested earlier
 		Date Conversion
 		Multiple Execution of same program. How to avoid duplicate. Identification of an entity
-		ini file
+		Reading ini file
 		Relative File Path Resolver
 		
 cd 'C:\Users\bhansm\Documents\My Received Files\powershell'
 . .\Ini.ps1
 . .\XRayEntityVosDefinition.ps1
 . .\RanorexReportProcessing.ps1
+
+cd 'C:\Users\bhansm\Documents\My Received Files\powershell\XRAYRanorex\src'
+
 
 $vo = [RanorexXmlProcessor]::new("C:\Users\bhansm\Desktop\XRAYRanorex\reports\WebConsole_20171109_134715.html.data.xml")
 $vo = [RanorexXmlProcessor]::new("C:\Users\bhansm\Desktop\XRAYRanorex\reports\RCPConsole_20171031_103925.rxlog.data.xml")

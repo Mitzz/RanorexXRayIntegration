@@ -2,10 +2,10 @@
 
 class RanorexXmlProcessor{
     [System.Xml.XmlDocument]$file
-    [XRayTestEntityVo[]]$testVos = @()
-    [XRayTestSetEntityVo[]]$testSetVos = @()
-    [XrayTestPlanVo]$testPlanVo
-    [XrayTestExecutorVo]$testExecutionVo
+    [XrayTestEntityVo[]]$testVos = @()
+    [XrayTestSetEntityVo[]]$testSetVos = @()
+    [XrayTestPlanEntityVo]$testPlanVo
+    [XrayTestExecutionEntityVo]$testExecutionVo
 
     [string]$startDate;
     [string]$endDate;
@@ -35,15 +35,15 @@ class RanorexXmlProcessor{
 
     }
 
-    [XRayTestEntityVo] handleTestCaseNode($testCaseNode){
+    [XrayTestEntityVo] handleTestCaseNode($testCaseNode){
         $testFields = [Fields]::new()
-        $testFields.description = $testCaseNode.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
-        $testFields.summary = $testCaseNode.testcontainername + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss)
+        $testFields.description = $testCaseNode.testcontainername + " (Created during Ranorex-XRay Integration using REST at " + $(get-date -f [Constants]::commonDateFormat) + ")"
+        $testFields.summary = $testCaseNode.testcontainername + " (Created during Ranorex-XRay Integration using REST at " + $(get-date -f [Constants]::commonDateFormat) + ")"
         $testFields.issuetype = [IssueType]::new("Test")
         $testFields.project = [Project]::new([Constants]::projectKey)
         $testFields.customfield_10400 = [TestType]::new("Generic")
         $testFields.customfield_10403 = "generic test definition"
-        [XRayTestEntityVo]$testVo = [XRayTestEntityVo]::new($testFields)
+        [XrayTestEntityVo]$testVo = [XrayTestEntityVo]::new($testFields)
         $testVo.setStatus($testCaseNode.result)
         $comment = $this.getComment($testCaseNode)
         $testVo.setComment($comment)
@@ -51,9 +51,9 @@ class RanorexXmlProcessor{
         return $testVo
     }
 
-    [XRayTestEntityVo[]] handleIterationContainerNode($iterationContainerNode){
+    [XrayTestEntityVo[]] handleIterationContainerNode($iterationContainerNode){
         Write-Host "Processing Iteration Container Node...."
-        [XRayTestEntityVo[]]$testArr = @()
+        [XrayTestEntityVo[]]$testArr = @()
         [string]$activityType = "";
         foreach ($childNodeOfIterationContainer in $iterationContainerNode.ChildNodes) {
             $activityType = $childNodeOfIterationContainer.type
@@ -65,9 +65,9 @@ class RanorexXmlProcessor{
         return $testArr
     }
 
-    [XRayTestEntityVo[]] handleSmartFolderNode($smartFolderNode){
+    [XrayTestEntityVo[]] handleSmartFolderNode($smartFolderNode){
         Write-Host "Processing Smart Folder Node...."
-        [XRayTestEntityVo[]]$testArr = @()
+        [XrayTestEntityVo[]]$testArr = @()
         [string]$activityType = "";
         foreach ($childNodeOfsmartFolder in $smartFolderNode.ChildNodes) {
             $activityType = $childNodeOfsmartFolder.type
@@ -90,7 +90,7 @@ class RanorexXmlProcessor{
         $activtyType = ''
         foreach ($smartFolderNode in $smartFolderNodes) {
             Write-Host "Processing Next SmartFolder"
-            $this.testSetVos = $this.testSetVos + [XRayTestSetEntityVo]::new($this.handleSmartFolderNode($smartFolderNode))
+            $this.testSetVos = $this.testSetVos + [XrayTestSetEntityVo]::new($this.handleSmartFolderNode($smartFolderNode))
             Write-Host "Finished"
         }
     }
@@ -135,7 +135,7 @@ class RanorexXmlProcessor{
     }
 
     CreateTestPlanVo(){
-        $this.testPlanVo = [XrayTestPlanVo]::new($this.testVos, $this.testSetVos)
+        $this.testPlanVo = [XrayTestPlanEntityVo]::new($this.testVos, $this.testSetVos)
         
     }
 
@@ -144,7 +144,7 @@ class RanorexXmlProcessor{
     }
 
     CreateTestExecutionVo(){
-        $this.testExecutionVo = [XrayTestExecutorVo]::new($this.testPlanVo, $this.startDate, $this.endDate)
+        $this.testExecutionVo = [XrayTestExecutionEntityVo]::new($this.testPlanVo, $this.startDate, $this.endDate)
     }
 
     SaveTestExecutionVo(){
