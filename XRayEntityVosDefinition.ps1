@@ -37,7 +37,7 @@ class XrayTestExecutionEntityVo{
 
         $body = @{
             "info" = @{
-            "summary" = "Created during importing ranorex result";
+            "summary" = "Created during importing ranorex result using REST at " + $([Constants]::currentDate);
             "description" = "This execution is automatically created when importing execution results from an external source";
             "version" = [Constants]::projectVersion;
             "user" = "qtp";
@@ -106,8 +106,8 @@ class XrayTestPlanEntityVo{
                 "project" = @{
                     "key" = [Constants]::projectKey
                 };
-                "summary" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
-                "description" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
+                "summary" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
+                "description" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
                 "issuetype" = @{
                     "name" = "Test Plan"
                  };
@@ -155,8 +155,8 @@ class XrayTestSetEntityVo{
                 "project" = @{
                     "key" = [Constants]::projectKey
                 };
-                "summary" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
-                "description" = "Created at " + $(get-date -f [Constants]::commonDateFormat) + " during Ranorex-XRay Integration using REST";
+                "summary" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
+                "description" = "Created during Ranorex-XRay Integration using REST at " + $([Constants]::currentDate);
                 "issuetype" = @{
                     "name" = "Test Set"
                  };
@@ -199,7 +199,7 @@ class XrayTestEntityVo
 
     static [XrayTestEntityVo] getInstance()
     { 
-        return [XrayTestEntityVo]::new([Fields]::new([Project]::new([Constants]::projectKey), "summary for " + ++[XrayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), "desc for " + [XrayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), [IssueType]::new("Test"), [TestType]::new("Generic"), "generic test definition"));
+        return [XrayTestEntityVo]::new([Fields]::new([Project]::new([Constants]::projectKey), "summary for " + ++[XrayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), "desc for " + [XrayTestEntityVo]::count + " at " + $([Constants]::currentDate), [IssueType]::new("Test"), [TestType]::new("Generic"), "generic test definition"));
     }
 
     save(){
@@ -310,7 +310,8 @@ class Constants{
     static [string]$projectKey = $ConfigFile["project"]["key"];
     static [string]$projectVersion = $ConfigFile["project"]["version"];
     static [string]$reportFilePath = $ConfigFile["report"]["filepath"];
-    static [string]$commonDateFormat = "dd-MM-yyyy HH:mm:ss";
+    static [string]$currentDateFormat = "dd-MMM-yyyy HH:mm:ss";
+    static [string]$currentDate = $(Get-Date).ToString([Constants]::currentDateFormat);
 }
 
 class Credentials{
