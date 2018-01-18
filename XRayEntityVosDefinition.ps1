@@ -1,4 +1,5 @@
 ﻿<# https://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91#content #>
+Import-Module 'C:\Users\bhansm\Documents\My Received Files\powershell\Get-IniContent.psm1'
 $ConfigFile = Get-IniContent $PSScriptRoot"\config.ini"
 
 class XrayTestExecutionEntityVo{

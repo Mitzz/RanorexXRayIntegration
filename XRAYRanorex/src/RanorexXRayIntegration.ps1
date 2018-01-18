@@ -550,7 +550,7 @@ class RanorexXmlProcessor{
                 $testArr = $testArr + $this.handleIterationContainerNode($childNodeOfsmartFolder)
             } elseif ($activityType -eq 'smart-folder'){
                 $testArr = $testArr + $this.handleSmartFolderNode($childNodeOfsmartFolder)
-         cd    }
+            }
         }
         #Write-Host "Found: " $testArr.Count
         return $testArr
