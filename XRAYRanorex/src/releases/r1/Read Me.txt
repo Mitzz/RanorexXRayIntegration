@@ -7,7 +7,6 @@ RanorexXRayIntegration.ps1
 
 config.ini
 	It is configuration file necessary for execution of the script. It contains properties group into section.  
-	
 	The description of each property is as follows
 	
 	- url: The JIRA server url for integration of Ranorex-XRAY

@@ -16,7 +16,7 @@ Challenges
 		Structure of XML XPAth to select nodes for extracting data
 		Rest API - Key Value of JSON (Data Structure) 
 		Removal of some property while conversion to JSON
-		Import Code from another script
+		Reuse(Import) Code from another script
 		Adding property to an object of a class in Powershell
 		If not working try with hard code values
 		Test with Small Datasets
