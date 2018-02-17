@@ -498,7 +498,7 @@ class RanorexXmlProcessor{
 
     RootNodeHandler($root_node){
         $dataStr = $root_node.timestamp
-        $dateFormat = "M/d/yyyy h:m:ss tt"
+        $dateFormat = "yyyy-MM-dd h:m:ss"
         $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
 
         $dataStr = $root_node.endtime
@@ -663,6 +663,6 @@ class RanorexXmlProcessor{
 }
 
 $vo = [RanorexXmlProcessor]::new([Constants]::reportFilePath)
-Write-Host "Integration Started."
+Write-Host "Integration Started..."
 $vo.execute()
 Write-Host "Integration Done Successfully."

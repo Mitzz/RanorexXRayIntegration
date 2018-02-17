@@ -33,14 +33,10 @@ class RanorexXmlProcessor{
 
     RootNodeHandler($root_node){
         $dataStr = $root_node.timestamp
-        $dateFormat = "M/d/yyyy h:m:ss tt"
-        $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
-
-        $dataStr = $root_node.endtime
-        $end = [datetime]::ParseExact($dataStr, $dateFormat, $null)
-
-        $this.startDate = $start.ToString('s') + "+00:00"
-        $this.endDate = $end.ToString('s') + "+00:00"
+        $dateFormat = "M/d/yyyy h:m:ss"
+		Write-Host $dataStr
+		$this.startDate = $null
+        $this.endDate = $null
     }
 
     [XrayTestEntityVo] handleTestCaseNode($testCaseNode){

@@ -237,7 +237,6 @@ class XrayTestEntityVo
     }
 
     [string]getStatus(){
-        #$this.status = $status
         If ($this.status -eq 'Success')  {
             return 'PASS'
         } ElseIf($this.status -eq 'Ignored') {
@@ -245,7 +244,7 @@ class XrayTestEntityVo
         } ElseIf($this.status -eq 'Failed') {
             return 'FAIL'
         }
-        return $null
+        return $this.status
     }
 
     changeWorkflowStatus([int]$transitionId){
