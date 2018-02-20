@@ -1,0 +1,23 @@
+Software Requirement
+	Powershell : > 5.0v
+
+Files Description:
+RanorexXRayIntegration.ps1
+	It is powershell script responsible for integration of Ranorex-XRAY
+
+config.ini
+	It is configuration file necessary for execution of the script. It contains properties group into section.  
+	The description of each property is as follows
+	
+	- url: The JIRA server url for integration of Ranorex-XRAY
+	- key: It is key of Project present in JIRA where results of integration will be shown. It is mandatory to set this property correctly otherwise script will not work as expected
+ 	- user and password: Username and password of the JIRA server for authentication purpose
+	- filepath: The absolute path of Ranorex report file which needs to be integrated
+
+Execution Steps:
+	- Both the files RanorexXRayIntegration.ps1 and config.ini are in same folder.
+	- Makes sure the above configuration properties	are set as per environment in 'config.ini' file 
+	- Open 'Powershell Shell' and do the following steps in the powershell:
+		- Go to directory where both the files RanorexXRayIntegration.ps1 and config.ini are present
+		- Execute command 'Set-ExecutionPolicy RemoteSigned'
+		- Execute command '. .\RanorexXRayIntegration.ps1'
