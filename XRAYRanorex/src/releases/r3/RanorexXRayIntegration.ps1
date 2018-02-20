@@ -107,7 +107,7 @@ Function Get-IniContent {
 <# --------------------------------------------------------------------------- #>
 <# https://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91#content #>
 $ConfigPath = Join-Path -Path $PSScriptRoot -ChildPath "config.ini" -Resolve
-<# Write-Host "Config File Path: " $configPath #>
+Write-Host "Config File Path: " $configPath
 $ConfigFile = Get-IniContent $ConfigPath
 
 class XrayTestExecutionEntityVo{
@@ -240,7 +240,6 @@ class XrayTestSetEntityVo{
 
         foreach ($test in $this.tests) {
             $test.save()
-            $test.changeWorkflowStatus(11)
             $testKey = $testKey + $test.key;
         }
 
@@ -296,51 +295,55 @@ class XrayTestEntityVo
 
     
     save(){
-        $vo = @{
-            "fields" = @{
-                "project" = @{
-                    "key" = [Constants]::projectKey;
+        if(-Not $this.exist()){
+            $vo = @{
+                "fields" = @{
+                    "project" = @{
+                        "key" = [Constants]::projectKey;
+                    };
+                    "summary" = $this.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+                    "description" = $this.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+                    "issuetype" = @{
+                        "name" = "Test";
+                    };
+                    "customfield_10400" = @{
+                        "value" = "Generic";
+                    };
+                    "customfield_10403" = "Generic test definition";
+				    "customfield_11514" = $this.summary;
                 };
-                "summary" = $this.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
-                "description" = $this.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
-                "issuetype" = @{
-                    "name" = "Test";
-                };
-                "customfield_10400" = @{
-                    "value" = "Generic";
-                };
-                "customfield_10403" = "Generic test definition";
-				"customfield_11514" = $this.summary;
-            };
-        }
+            }
 
-        $response = [RestApi]::post([Constants]::url + "api/2/issue", $vo)
-        $responseContent = ConvertFrom-Json ($response.Content)
-        $this.id = $responseContent.id
-        $this.key = $responseContent.key
-        $this.self = $responseContent.self
-        Write-Host "Test Creation Done."
+            $response = [RestApi]::post([Constants]::url + "api/2/issue", $vo)
+            $responseContent = ConvertFrom-Json ($response.Content)
+            $this.id = $responseContent.id
+            $this.key = $responseContent.key
+            $this.self = $responseContent.self
+            Write-Host "Test Creation Done." 
+            $this.changeWorkflowStatus(11)
+        } else {
+            Write-Host "Test Already Exist."
+        }
+        
     }
 	
 	[boolean]exist(){
-		$jql = $("project = " + [Constants]::projectKey + " AND issuetype = 'Test' AND `"Script Name`" ~ " + $this.description);
+		$jql = $("project = " + [Constants]::projectKey + " AND issuetype = 'Test' AND `"Script Name`" ~ `"" + $this.description + "`"");
         $url = [Constants]::url + "api/2/search?jql=" + $jql;
-        $Headers = @{
-		    Authorization = [Credentials]::getEncodedValue()
-	    }
-        [Credentials]::setProtocols()
-		$response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Get
+        $response = [RestApi]::get($url)
 	    $responseContent = ConvertFrom-Json ($response.Content)
         foreach($issue in $responseContent.issues){
             $fields = $issue.fields;
             $scriptName = $fields.customfield_11514;
             if($scriptName -eq $this.description){
+				Write-Host $scriptName;
                 $this.key = $issue.key;
-                $this.id = $issue.id;   
+                $this.id = $issue.id;
+                return $true;   
             }
-            Write-Host $fields.customfield_11514
+            
         }
-        return false;
+        return $false;
     }
 
     [string]getComment(){
@@ -374,7 +377,6 @@ class XrayTestEntityVo
                 id = $transitionId
             }
         }
-        [Credentials]::setProtocols()
         Write-Host "Test Transition Started." 
         $response = [RestApi]::post($url, $body) 
 	    #$responseContent = ConvertFrom-Json ($response.Content)
@@ -398,7 +400,10 @@ class RestApi{
 	    }
         [Credentials]::setProtocols()
         $response = $null;
+
         if($method -eq "Post"){
+            Write-Host $url
+            Write-Host $(ConvertTo-Json $body -Depth 99)
             $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method $method -Body (ConvertTo-Json $body -Depth 99) -ContentType "application/json" 
         } elseif($method -eq "Get"){
             $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method $method 
@@ -433,8 +438,9 @@ class Credentials{
     static [string]$password = $ConfigFile["credentials"]["password"];
     
     static [string] getEncodedValue(){
+        
         $pair = "$([Credentials]::user):$([Credentials]::password)"
-	    $encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($pair))
+        $encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($pair))
 	    return "Basic $encodedCreds"
     }
 
@@ -567,7 +573,6 @@ class RanorexXmlProcessor{
         #Write-Host $this.testVos.Count
         $testSuiteChildNodes= $this.file.SelectNodes("//activity[@type='test-suite']/child::node()")
         $activityType = ''
-        $testFields = [Fields]::new()
         [int]$count = 0
         foreach ($testSuiteChildNode in $testSuiteChildNodes) {
             $activityType = $testSuiteChildNode.type
@@ -589,7 +594,6 @@ class RanorexXmlProcessor{
     SaveTestVos(){
         foreach ($testVo in $this.testVos) {
             $testVo.save()
-            $testVo.changeWorkflowStatus(11);
         }
     }
 
