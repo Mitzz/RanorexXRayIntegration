@@ -126,10 +126,6 @@ class XrayTestExecutionEntityVo{
 
     create(){
         $url = [Constants]::url + "raven/1.0/import/execution"
-        $Headers = @{
-		    Authorization = [Credentials]::getEncodedValue()
-	    }
-
         $tests = @()
         foreach ($test in $this.testPlanVo.getTestVos()) {
             $status = $test.getStatus()
@@ -161,10 +157,9 @@ class XrayTestExecutionEntityVo{
           };
           "tests" = $tests
         }
-        [Credentials]::setProtocols()
         Write-Host "Test Execution Plan Creation Started."
-        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
-	    Write-Host "Test Execution Plan Creation Ended."
+        $response = [RestApi]::post($url, $body)
+        Write-Host "Test Execution Plan Creation Ended."
 
     }
 }
@@ -206,10 +201,6 @@ class XrayTestPlanEntityVo{
 
     create(){
         $url = [Constants]::url + "api/2/issue"
-        $Headers = @{
-		    Authorization = [Credentials]::getEncodedValue()
-	    }
-
         $body = @{
             fields = @{
                 "project" = @{
@@ -223,10 +214,9 @@ class XrayTestPlanEntityVo{
                 "customfield_10424" = $this.getKeys()
              }
          }
-        [Credentials]::setProtocols()
         Write-Host "Test Plan Creation Started."
-        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
-	    $responseContent = ConvertFrom-Json ($response.Content)
+        $response = [RestApi]::post($url, $body)
+        $responseContent = ConvertFrom-Json ($response.Content)
         $this.key = $responseContent.key
         Write-Host "Test Plan Creation Done."
     }
@@ -246,10 +236,6 @@ class XrayTestSetEntityVo{
 
     create(){
         $url = [Constants]::url + "api/2/issue"
-        $Headers = @{
-		    Authorization = [Credentials]::getEncodedValue()
-	    }
-       
         $testKey = @()
 
         foreach ($test in $this.tests) {
@@ -272,10 +258,9 @@ class XrayTestSetEntityVo{
              }
          }
          
-         [Credentials]::setProtocols()
         Write-Host "Test Set Creation Started."
-        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
-	    $responseContent = ConvertFrom-Json ($response.Content)
+        $response = [RestApi]::post($url, $body)
+        $responseContent = ConvertFrom-Json ($response.Content)
         $this.key = $responseContent.key
         Write-Host "Test Set Creation Done."
     }
@@ -309,11 +294,7 @@ class XrayTestEntityVo
 		$this.testType = "Generic";
     }
 
-    static [XrayTestEntityVo] getInstance()
-    { 
-        return [XrayTestEntityVo]::new([Fields]::new([Project]::new([Constants]::projectKey), "summary for " + ++[XrayTestEntityVo]::count + " at " + $(get-date -f MM-dd-yyyy_HH_mm_ss), "desc for " + [XrayTestEntityVo]::count + " at " + $([Constants]::currentDate), [IssueType]::new("Test"), [TestType]::new("Generic"), "generic test definition"));
-    }
-
+    
     save(){
         $vo = @{
             "fields" = @{
@@ -332,18 +313,34 @@ class XrayTestEntityVo
 				"customfield_11514" = $this.summary;
             };
         }
-        $url = [Constants]::url + "api/2/issue"
-        $Headers = @{
-		    Authorization = [Credentials]::getEncodedValue()
-	    }
-        [Credentials]::setProtocols()
-        Write-Host "Test Creation Started."
-        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $vo -Depth 99) -ContentType "application/json" 
-	    $responseContent = ConvertFrom-Json ($response.Content)
+
+        $response = [RestApi]::post([Constants]::url + "api/2/issue", $vo)
+        $responseContent = ConvertFrom-Json ($response.Content)
         $this.id = $responseContent.id
         $this.key = $responseContent.key
         $this.self = $responseContent.self
         Write-Host "Test Creation Done."
+    }
+	
+	[boolean]exist(){
+		$jql = $("project = " + [Constants]::projectKey + " AND issuetype = 'Test' AND `"Script Name`" ~ " + $this.description);
+        $url = [Constants]::url + "api/2/search?jql=" + $jql;
+        $Headers = @{
+		    Authorization = [Credentials]::getEncodedValue()
+	    }
+        [Credentials]::setProtocols()
+		$response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Get
+	    $responseContent = ConvertFrom-Json ($response.Content)
+        foreach($issue in $responseContent.issues){
+            $fields = $issue.fields;
+            $scriptName = $fields.customfield_11514;
+            if($scriptName -eq $this.description){
+                $this.key = $issue.key;
+                $this.id = $issue.id;   
+            }
+            Write-Host $fields.customfield_11514
+        }
+        return false;
     }
 
     [string]getComment(){
@@ -372,9 +369,6 @@ class XrayTestEntityVo
 
     changeWorkflowStatus([int]$transitionId){
         $url = [Constants]::url + "api/2/issue/$($this.key)/transitions?expand=transitions.fields"
-        $Headers = @{
-		    Authorization = [Credentials]::getEncodedValue()
-	    }
         $body = @{
             transition = @{
                 id = $transitionId
@@ -382,56 +376,37 @@ class XrayTestEntityVo
         }
         [Credentials]::setProtocols()
         Write-Host "Test Transition Started." 
-        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $body) -ContentType "application/json" 
+        $response = [RestApi]::post($url, $body) 
 	    #$responseContent = ConvertFrom-Json ($response.Content)
         Write-Host "Test Transition Done."
     }
 }
 
-<#class Fields{
-    [Project]$project;
-    [string]$summary;
-    [string]$description;
-    [IssueType]$issuetype;
-    [TestType]$customfield_10400;
-    [string]$customfield_10403; 
+class RestApi{
 
-    Fields(){
+    [object]static post($url, $body){
+        return [RestApi]::rest($url, "Post", $body);
     }
 
-    Fields([Project]$project, [string]$summary, [string]$description, [IssueType]$issuetype, [TestType]$customfield_10400, [string]$customfield_10403){
-        $this.project = $project
-        $this.summary = $summary
-        $this.description = $description
-        $this.issuetype = $issuetype
-        $this.customfield_10400 = $customfield_10400
-        $this.customfield_10403 = $customfield_10403
+    [object]static get($url){
+        return [RestApi]::rest($url, "Get", $null);
     }
+
+    [object]static rest($url, $method, $body){
+        $Headers = @{
+		    Authorization = [Credentials]::getEncodedValue()
+	    }
+        [Credentials]::setProtocols()
+        $response = $null;
+        if($method -eq "Post"){
+            $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method $method -Body (ConvertTo-Json $body -Depth 99) -ContentType "application/json" 
+        } elseif($method -eq "Get"){
+            $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method $method 
+	    }
+	    return $response;
+    }
+
 }
-
-class TestType{
-    [string]$value;
-    
-    TestType([string]$value){
-        $this.value = $value;
-    }
-}
-
-class IssueType{
-    [string]$name;
-
-    IssueType([string]$name){
-        $this.name = $name;
-    }
-}
-
-class Project{
-    [string]$key;
-
-    Project([string]$key){
-        $this.key = $key;
-    }
-}#>
 
 class Constants{
     
