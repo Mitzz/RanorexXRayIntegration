@@ -291,7 +291,9 @@ class XrayTestSetEntityVo{
 
 class XrayTestEntityVo
 {
-    [Fields]$fields;
+    [string]$summary;
+    [string]$description;
+    [string]$testType;
     [string]$key;
     [string]$id;
     [string]$self;
@@ -301,8 +303,10 @@ class XrayTestEntityVo
     [string]$finish;#>
     [string]$comment;
       
-    XrayTestEntityVo([Fields]$fields){
-        $this.fields = $fields
+    XrayTestEntityVo([string]$summary, [string]$description){
+        $this.summary = $summary;
+        $this.description = $description;
+		$this.testType = "Generic";
     }
 
     static [XrayTestEntityVo] getInstance()
@@ -311,16 +315,30 @@ class XrayTestEntityVo
     }
 
     save(){
+        $vo = @{
+            "fields" = @{
+                "project" = @{
+                    "key" = [Constants]::projectKey;
+                };
+                "summary" = $this.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+                "description" = $this.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+                "issuetype" = @{
+                    "name" = "Test";
+                };
+                "customfield_10400" = @{
+                    "value" = "Generic";
+                };
+                "customfield_10403" = "Generic test definition";
+				"customfield_11514" = $this.summary;
+            };
+        }
         $url = [Constants]::url + "api/2/issue"
         $Headers = @{
 		    Authorization = [Credentials]::getEncodedValue()
 	    }
-        $this.fields.summary = $this.fields.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")"
-        $this.fields.description = $this.fields.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")"
-
         [Credentials]::setProtocols()
         Write-Host "Test Creation Started."
-        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $this) -ContentType "application/json" 
+        $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Post -Body (ConvertTo-Json $vo -Depth 99) -ContentType "application/json" 
 	    $responseContent = ConvertFrom-Json ($response.Content)
         $this.id = $responseContent.id
         $this.key = $responseContent.key
@@ -370,7 +388,7 @@ class XrayTestEntityVo
     }
 }
 
-class Fields{
+<#class Fields{
     [Project]$project;
     [string]$summary;
     [string]$description;
@@ -413,7 +431,7 @@ class Project{
     Project([string]$key){
         $this.key = $key;
     }
-}
+}#>
 
 class Constants{
     
@@ -509,14 +527,7 @@ class RanorexXmlProcessor{
     }
 
     [XrayTestEntityVo] handleTestCaseNode($testCaseNode){
-        $testFields = [Fields]::new()
-        $testFields.description = $testCaseNode.testcontainername
-        $testFields.summary = $testCaseNode.testcontainername
-        $testFields.issuetype = [IssueType]::new("Test")
-        $testFields.project = [Project]::new([Constants]::projectKey)
-        $testFields.customfield_10400 = [TestType]::new("Generic")
-        $testFields.customfield_10403 = "Generic test definition"
-        [XrayTestEntityVo]$testVo = [XrayTestEntityVo]::new($testFields)
+        [XrayTestEntityVo]$testVo = [XrayTestEntityVo]::new($testCaseNode.testcontainername, $testCaseNode.testcontainername)
         $testVo.setStatus($testCaseNode.result)
         $comment = $this.getComment($testCaseNode)
         $testVo.setComment($comment)
@@ -550,7 +561,7 @@ class RanorexXmlProcessor{
                 $testArr = $testArr + $this.handleIterationContainerNode($childNodeOfsmartFolder)
             } elseif ($activityType -eq 'smart-folder'){
                 $testArr = $testArr + $this.handleSmartFolderNode($childNodeOfsmartFolder)
-         cd    }
+            }
         }
         #Write-Host "Found: " $testArr.Count
         return $testArr
@@ -650,14 +661,14 @@ class RanorexXmlProcessor{
     }
 
     execute(){
-        $this.CreateTestVos()
-        $this.CreateTestSetVos()
-        $this.SaveTestVos()
-        $this.SaveTestSetVos()
+        $this.CreateTestVos();
+        $this.CreateTestSetVos();
+        $this.SaveTestVos();
+        $this.SaveTestSetVos();
         $this.CreateTestPlanVo();
-        $this.SaveTestPlanVo()
+        $this.SaveTestPlanVo();
         $this.CreateTestExecutionVo();
-        $this.SaveTestExecutionVo()
+        $this.SaveTestExecutionVo();
 
     }
 }
