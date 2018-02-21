@@ -170,9 +170,21 @@ class XrayTestPlanEntityVo{
     [XrayTestSetEntityVo[]]$testSetVos
     [string]$key
 
-    XrayTestPlanEntityVo($testVos, $testSetVos){
+    XrayTestPlanEntityVo([XrayTestEntityVo[]]$testVos, [XrayTestSetEntityVo[]]$testSetVos){
         $this.testVos = $testVos
         $this.testSetVos = $testSetVos
+    }
+
+    XrayTestPlanEntityVo([string]$key){
+        $this.key = $key
+    }
+
+    XrayTestPlanEntityVo([XrayTestEntityVo[]]$testVos){
+        $this.testVos = $testVos
+    }
+
+    setTestVos([XrayTestEntityVo[]]$testVos){
+        $this.testVos = $testVos
     }
 
     [string[]] getKeys(){
@@ -181,8 +193,10 @@ class XrayTestPlanEntityVo{
             $keys = $keys + $vo.key
         }
 
-        foreach($vo in $this.testSetVos) {
-            $keys = $keys + $vo.getTestKeys()
+        if($this.testSetVos -ne $null){
+            foreach($vo in $this.testSetVos) {
+                $keys = $keys + $vo.getTestKeys()
+            }
         }
         return $keys
     }
@@ -193,33 +207,103 @@ class XrayTestPlanEntityVo{
             $vos = $vos + $vo
         }
 
-        foreach($vo in $this.testSetVos) {
-            $vos = $vos + $vo.getTestVos()
+        if($this.testSetVos -ne $null){
+            foreach($vo in $this.testSetVos) {
+                $vos = $vos + $vo.getTestVos()
+            }
         }
         return $vos
+    }
+	
+	[object[]] getAssociatedTest(){
+		$url = [Constants]::url + "raven/1.0/api/testplan/" + $this.key + "/test"
+        $response = [RestApi]::get($url) 
+    	$responseContent = ConvertFrom-Json ($response.Content)
+        return $responseContent
+	}
+
+    [boolean] exist(){
+        Write-Host "Test Plan Key ("$this.key") existence check"
+		$url = [Constants]::url + "raven/1.0/api/testplan/" + $this.key + "/test"
+        try { 
+            $response = [RestApi]::get($url)
+            return $true
+        } catch {
+            $response = $_.Exception.Response.StatusCode.Value__
+            return $false
+        }
+	}
+	
+	[string[]] getAssociatedTestKeys(){
+		$associatedTests = $this.getAssociatedTest();
+		[string[]] $keys = @();
+		foreach($associatedTest in $associatedTests){
+			$keys = $keys + $associatedTest.key;
+		}
+		return $keys;
+	}
+
+    [string[]] getRemainingKeys(){
+        [string[]]$givenKeys = $this.getKeys();
+        [string[]]$associatedKeys = $this.getAssociatedTestKeys();
+        [string[]]$remainingKeys = @()
+
+        foreach($givenKey in $givenKeys){
+            if(-not $associatedKeys.Contains($givenKey)){
+                $remainingKeys = $remainingKeys + $givenKey;
+            }
+        }
+
+        return $remainingKeys;
+    }
+
+    update(){
+        $newTestKeys = $this.getRemainingKeys();
+        if($newTestKeys.Count -ne 0){
+            Write-Host "Updating test plan"
+            $url = [Constants]::url + "raven/1.0/api/testplan/" + $this.key + "/test"
+            $body = @{
+                "add" = $newTestKeys
+            }
+            [RestApi]::post($url, $body)
+        }
+    }
+
+    persist(){
+        if($this.exist()){
+            $this.update()
+        } else {
+            $this.create()
+        }
     }
 
     create(){
         $url = [Constants]::url + "api/2/issue"
-        $body = @{
-            fields = @{
-                "project" = @{
-                    "key" = [Constants]::projectKey
-                };
-                "summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
-                "description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
-                "issuetype" = @{
-                    "name" = "Test Plan"
-                 };
-                "customfield_10424" = $this.getKeys()
-             }
-         }
-        Write-Host "Test Plan Creation Started."
-        $response = [RestApi]::post($url, $body)
-        $responseContent = ConvertFrom-Json ($response.Content)
-        $this.key = $responseContent.key
-        Write-Host "Test Plan Creation Done."
+		$body = @{
+			fields = @{
+				"project" = @{
+					"key" = [Constants]::projectKey
+				};
+				"summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+				"description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+				"issuetype" = @{
+					"name" = "Test Plan"
+					};
+				"customfield_10424" = $this.getKeys()
+				}
+			}
+		Write-Host "Test Plan Creation Started."
+		$response = [RestApi]::post($url, $body)
+		$responseContent = ConvertFrom-Json ($response.Content)
+		$this.key = $responseContent.key
+		Write-Host "Test Plan Creation Done."
     }
+	
+	[boolean] allTestAssociated(){
+		$associatedTestKeys = $this.getAssociatedTestKeys();
+		return $true;
+		
+	}
 }
 
 class XrayTestSetEntityVo{
@@ -294,36 +378,32 @@ class XrayTestEntityVo
     }
 
     
-    save(){
-        if(-Not $this.exist()){
-            $vo = @{
-                "fields" = @{
-                    "project" = @{
-                        "key" = [Constants]::projectKey;
-                    };
-                    "summary" = $this.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
-                    "description" = $this.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
-                    "issuetype" = @{
-                        "name" = "Test";
-                    };
-                    "customfield_10400" = @{
-                        "value" = "Generic";
-                    };
-                    "customfield_10403" = "Generic test definition";
-				    "customfield_11514" = $this.summary;
+    create(){
+        $vo = @{
+            "fields" = @{
+                "project" = @{
+                    "key" = [Constants]::projectKey;
                 };
-            }
-
-            $response = [RestApi]::post([Constants]::url + "api/2/issue", $vo)
-            $responseContent = ConvertFrom-Json ($response.Content)
-            $this.id = $responseContent.id
-            $this.key = $responseContent.key
-            $this.self = $responseContent.self
-            Write-Host "Test Creation Done." 
-            $this.changeWorkflowStatus(11)
-        } else {
-            Write-Host "Test Already Exist."
+                "summary" = $this.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+                "description" = $this.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+                "issuetype" = @{
+                    "name" = "Test";
+                };
+                "customfield_10400" = @{
+                    "value" = "Generic";
+                };
+                "customfield_10403" = "Generic test definition";
+				"customfield_11514" = $this.summary;
+            };
         }
+
+        $response = [RestApi]::post([Constants]::url + "api/2/issue", $vo)
+        $responseContent = ConvertFrom-Json ($response.Content)
+        $this.id = $responseContent.id
+        $this.key = $responseContent.key
+        $this.self = $responseContent.self
+        Write-Host "Test Creation Done." 
+        $this.changeWorkflowStatus(11)
         
     }
 	
@@ -336,8 +416,7 @@ class XrayTestEntityVo
             $fields = $issue.fields;
             $scriptName = $fields.customfield_11514;
             if($scriptName -eq $this.description){
-				Write-Host $scriptName;
-                $this.key = $issue.key;
+				$this.key = $issue.key;
                 $this.id = $issue.id;
                 return $true;   
             }
@@ -400,10 +479,10 @@ class RestApi{
 	    }
         [Credentials]::setProtocols()
         $response = $null;
-
+        Write-Host $url
+        Write-Host $(ConvertTo-Json $body -Depth 99)
+        Write-Host $method
         if($method -eq "Post"){
-            Write-Host $url
-            Write-Host $(ConvertTo-Json $body -Depth 99)
             $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method $method -Body (ConvertTo-Json $body -Depth 99) -ContentType "application/json" 
         } elseif($method -eq "Get"){
             $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method $method 
@@ -421,13 +500,32 @@ class Constants{
     static [string]$reportFilePath = $ConfigFile["report"]["filepath"];
     static [string]$currentDateFormat = "dd-MMM-yyyy HH:mm:ss";
     static [string]$currentDate = $(Get-Date).ToString([Constants]::currentDateFormat);
+	static [string]$testPlanKey = $ConfigFile["jira"]["testplankey"];
 
     static Reload(){
         [Constants]::url = $global:ConfigFile["server"]["url"] + "/rest/";
         [Constants]::projectKey = $global:ConfigFile["project"]["key"];
         [Constants]::projectVersion = $global:ConfigFile["project"]["version"];
         [Constants]::reportFilePath = $global:ConfigFile["report"]["filepath"];
-        
+        [Constants]::testPlanKey = $global:ConfigFile["jira"]["testplankey"];
+    
+    }
+
+    static [boolean]isTestPlanGiven(){
+		if([Constants]::testPlanKey -eq $null -or [Constants]::testPlanKey -eq ""){
+			return $false;
+		} else {
+			return $true;
+		}
+		return $false;
+	}
+
+    static [string]getTestPlanKey(){
+        return [Constants]::testPlanKey;
+    }
+
+    static [string]getProjectKey(){
+        return [Constants]::projectKey;
     }
 }
 
@@ -558,6 +656,10 @@ class RanorexXmlProcessor{
             $this.testSetVos = $this.testSetVos + [XrayTestSetEntityVo]::new($this.handleSmartFolderNode($smartFolderNode))
             #Write-Host "Finished"
         }
+
+        foreach($testSet in $this.testSetVos){
+            $this.testVos = $this.testVos + $testSet.getTestVos()
+        }
     }
 
     SaveTestSetVos(){
@@ -593,16 +695,29 @@ class RanorexXmlProcessor{
 
     SaveTestVos(){
         foreach ($testVo in $this.testVos) {
-            $testVo.save()
+            if(-Not $testVo.exist()){
+                $testVo.create()
+            } else {
+                Write-Host "Test with description " $testVo.description " exist in JIRA"
+            }
         }
     }
 
     CreateTestPlanVo(){
-        $this.testPlanVo = [XrayTestPlanEntityVo]::new($this.testVos, $this.testSetVos)
+        if([Constants]::isTestPlanGiven()){
+            $this.testPlanVo = [XrayTestPlanEntityVo]::new([Constants]::getTestPlanKey())
+            $isTestPlanExist = $this.testPlanVo.exist()
+            if(-not $isTestPlanExist){
+                throw $("Given Test Plan Key(" + [Constants]::getTestPlanKey() + ") doest not exist in Project(" + [Constants]::getProjectKey() + ")") 
+            }
+            $this.testPlanVo.setTestVos($this.testVos)
+        } else {
+            $this.testPlanVo = [XrayTestPlanEntityVo]::new($this.testVos)
+        }
     }
 
     SaveTestPlanVo(){
-        $this.testPlanVo.create()
+        $this.testPlanVo.persist()
     }
 
     CreateTestExecutionVo(){
@@ -639,12 +754,15 @@ class RanorexXmlProcessor{
           return $comment
     }
 
+    
+
     execute(){
         $this.CreateTestVos();
         $this.CreateTestSetVos();
         $this.SaveTestVos();
-        $this.SaveTestSetVos();
+        #$this.SaveTestSetVos();
         $this.CreateTestPlanVo();
+
         $this.SaveTestPlanVo();
         $this.CreateTestExecutionVo();
         $this.SaveTestExecutionVo();
@@ -652,7 +770,9 @@ class RanorexXmlProcessor{
     }
 }
 
+
+
 $vo = [RanorexXmlProcessor]::new([Constants]::reportFilePath)
-Write-Host "Integration Started..."
+Write-Host "Integration Started.."
 $vo.execute()
 Write-Host "Integration Done Successfully."
