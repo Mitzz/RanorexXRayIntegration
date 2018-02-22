@@ -224,10 +224,10 @@ class XrayTestPlanEntityVo{
 	}
 
     [boolean] exist(){
-        Write-Host "Test Plan Key ("$this.key") existence check"
-		$url = [Constants]::url + "raven/1.0/api/testplan/" + $this.key + "/test"
+        $url = [Constants]::url + "raven/1.0/api/testplan/" + $this.key + "/test"
         try { 
             $response = [RestApi]::get($url)
+            Write-Host "Test Plan Key ("$this.key") exist"
             return $true
         } catch {
             $response = $_.Exception.Response.StatusCode.Value__
@@ -385,7 +385,7 @@ class XrayTestEntityVo
                 "project" = @{
                     "key" = [Constants]::projectKey;
                 };
-                "summary" = $this.summary + " " + [Constants]::message;
+                "summary" = $this.summary;
                 "description" = $this.description + " " + [Constants]::message;
                 "issuetype" = @{
                     "name" = "Test";
@@ -403,7 +403,7 @@ class XrayTestEntityVo
         $this.id = $responseContent.id
         $this.key = $responseContent.key
         $this.self = $responseContent.self
-        Write-Host "Test Created with key " $this.key "." 
+        Write-Host "Test Created with key "$this.key"." 
         $this.changeWorkflowStatus(11)
         
     }
@@ -598,15 +598,18 @@ class RanorexXmlProcessor{
     }
 
     RootNodeHandler($root_node){
-        $dataStr = $root_node.timestamp
-        $dateFormat = [Constants]::testsuiteDateformat
-        $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+        try {
+            $dataStr = $root_node.timestamp
+            $dateFormat = [Constants]::testsuiteDateformat
+            $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
+            $dataStr = $root_node.endtime
+            $end = [datetime]::ParseExact($dataStr, $dateFormat, $null)
 
-        $dataStr = $root_node.endtime
-        $end = [datetime]::ParseExact($dataStr, $dateFormat, $null)
-
-        $this.startDate = $start.ToString('s') + "+00:00"
-        $this.endDate = $end.ToString('s') + "+00:00"
+            $this.startDate = $start.ToString('s') + "+00:00"
+            $this.endDate = $end.ToString('s') + "+00:00"
+        } catch {
+            throw $("Date Format '" + [Constants]::testsuiteDateformat + "' in config.ini file is not matching with the report")      
+        }
     }
 
     [XrayTestEntityVo] handleTestCaseNode($testCaseNode){
@@ -702,7 +705,7 @@ class RanorexXmlProcessor{
             if(-Not $testVo.exist()){
                 $testVo.create()
             } else {
-                Write-Host "Test with description " $testVo.description " exist in JIRA"
+                Write-Host "Test with description "$testVo.description"("$testVo.key") exist in JIRA"
             }
         }
     }
