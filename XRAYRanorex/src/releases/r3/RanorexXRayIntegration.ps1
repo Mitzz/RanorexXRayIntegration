@@ -145,7 +145,7 @@ class XrayTestExecutionEntityVo{
 
         $body = @{
             "info" = @{
-            "summary" = $this.name + "(Created during importing ranorex result using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+            "summary" = $this.name + [Constants]::message;
             "description" = "This execution is automatically created when importing execution results from an external source";
             #"version" = [Constants]::projectVersion;
             "user" = "qtp";
@@ -157,9 +157,10 @@ class XrayTestExecutionEntityVo{
           };
           "tests" = $tests
         }
-        Write-Host "Test Execution Plan Creation Started."
+        Write-Host "Test Execution Creation Started."
         $response = [RestApi]::post($url, $body)
-        Write-Host "Test Execution Plan Creation Ended."
+        $responseContent = ConvertFrom-Json ($response.Content)
+		Write-Host $("Test Execution created with key '" + $responseContent.testExecIssue.key + "'")
 
     }
 }
@@ -284,8 +285,8 @@ class XrayTestPlanEntityVo{
 				"project" = @{
 					"key" = [Constants]::projectKey
 				};
-				"summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
-				"description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+				"summary" = [Constants]::message;
+				"description" = [Constants]::message;
 				"issuetype" = @{
 					"name" = "Test Plan"
 					};
@@ -296,7 +297,7 @@ class XrayTestPlanEntityVo{
 		$response = [RestApi]::post($url, $body)
 		$responseContent = ConvertFrom-Json ($response.Content)
 		$this.key = $responseContent.key
-		Write-Host "Test Plan Creation Done."
+		Write-Host "Test Plan created with Key '" $this.key "'"
     }
 	
 	[boolean] allTestAssociated(){
@@ -332,8 +333,8 @@ class XrayTestSetEntityVo{
                 "project" = @{
                     "key" = [Constants]::projectKey
                 };
-                "summary" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
-                "description" = "Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat);
+                "summary" = [Constants]::message;
+                "description" = [Constants]::message;
                 "issuetype" = @{
                     "name" = "Test Set"
                  };
@@ -384,8 +385,8 @@ class XrayTestEntityVo
                 "project" = @{
                     "key" = [Constants]::projectKey;
                 };
-                "summary" = $this.summary + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
-                "description" = $this.description + " (Created during Ranorex-XRay Integration using REST at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")";
+                "summary" = $this.summary + " " + [Constants]::message;
+                "description" = $this.description + " " + [Constants]::message;
                 "issuetype" = @{
                     "name" = "Test";
                 };
@@ -402,7 +403,7 @@ class XrayTestEntityVo
         $this.id = $responseContent.id
         $this.key = $responseContent.key
         $this.self = $responseContent.self
-        Write-Host "Test Creation Done." 
+        Write-Host "Test Created with key " $this.key "." 
         $this.changeWorkflowStatus(11)
         
     }
@@ -479,9 +480,9 @@ class RestApi{
 	    }
         [Credentials]::setProtocols()
         $response = $null;
-        Write-Host $url
+        <#Write-Host $url
         Write-Host $(ConvertTo-Json $body -Depth 99)
-        Write-Host $method
+        Write-Host $method#>
         if($method -eq "Post"){
             $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method $method -Body (ConvertTo-Json $body -Depth 99) -ContentType "application/json" 
         } elseif($method -eq "Get"){
@@ -501,6 +502,8 @@ class Constants{
     static [string]$currentDateFormat = "dd-MMM-yyyy HH:mm:ss";
     static [string]$currentDate = $(Get-Date).ToString([Constants]::currentDateFormat);
 	static [string]$testPlanKey = $ConfigFile["jira"]["testplankey"];
+    static [string]$testsuiteDateformat = $ConfigFile["report"]["testsuite-dateformat"];
+    static [string]$message = "(Created during importing Ranorex results at " + $(Get-Date).ToString([Constants]::currentDateFormat) + ")"
 
     static Reload(){
         [Constants]::url = $global:ConfigFile["server"]["url"] + "/rest/";
@@ -508,7 +511,8 @@ class Constants{
         [Constants]::projectVersion = $global:ConfigFile["project"]["version"];
         [Constants]::reportFilePath = $global:ConfigFile["report"]["filepath"];
         [Constants]::testPlanKey = $global:ConfigFile["jira"]["testplankey"];
-    
+        [Constants]::testsuiteDateformat = $global:ConfigFile["report"]["testsuite-dateformat"];
+
     }
 
     static [boolean]isTestPlanGiven(){
@@ -595,7 +599,7 @@ class RanorexXmlProcessor{
 
     RootNodeHandler($root_node){
         $dataStr = $root_node.timestamp
-        $dateFormat = "yyyy-MM-dd h:m:ss"
+        $dateFormat = [Constants]::testsuiteDateformat
         $start = [datetime]::ParseExact($dataStr, $dateFormat, $null)
 
         $dataStr = $root_node.endtime
