@@ -34,6 +34,7 @@ Challenges
 		Changing report file in config file and testing the program for the changed file in the same session
 		Common Code but wrt time it is not a good idea
 		Removal of non-mandatory fields
+		https://confluence.atlassian.com/display/JIRA043/Advanced+Searching?clicked=jirahelp#AdvancedSearching-ReservedCharacters
 		
 cd 'C:\Users\bhansm\Documents\My Received Files\powershell'
 . .\Ini.ps1

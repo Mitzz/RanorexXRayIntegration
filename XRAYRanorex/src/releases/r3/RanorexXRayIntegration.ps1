@@ -165,7 +165,6 @@ class XrayTestExecutionEntityVo{
     }
 }
 
-
 class XrayTestPlanEntityVo{
     [XrayTestEntityVo[]]$testVos
     [XrayTestSetEntityVo[]]$testSetVos
